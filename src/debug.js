@@ -1,6 +1,7 @@
 /* Helpers for debuging */
 
 var debug = module.exports = {};
+var util = require("util");
 
 Object.defineProperty(debug, '__stack', {
 	get: function(){
@@ -25,7 +26,7 @@ Object.defineProperty(debug, '__line', {
 
 
 debug.isProduction = function () {
-    return (prosess.env.NODE_ENV === "production");
+    return (process.env.NODE_ENV === "production");
 }
 
 debug.log = function () {
