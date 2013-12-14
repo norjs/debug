@@ -1,0 +1,21 @@
+{
+  "name": "nor-debug",
+  "version": "0.1.0",
+  "description": "Debug helpers for Node.js apps",
+  "main": "src/debug.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sendanor/nor-debug"
+  },
+  "keywords": [
+    "debug"
+  ],
+  "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Sendanor/nor-debug/issues"
+  }
+}
