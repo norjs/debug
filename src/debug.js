@@ -24,19 +24,23 @@ Object.defineProperty(debug, '__line', {
 	}
 });
 
-
+/** Returns true if the app is running in production mode */
 debug.isProduction = function () {
-    return (process.env.NODE_ENV === "production");
-}
+	return (process.env.NODE_ENV === "production");
+};
 
+/** Returns true if the app is running in development mode */
+debug.isDevelopment = function () {
+	return debug.isProduction() ? false : true;
+};
+
+/** */
 debug.log = function () {
     if(!debug.isProduction()) {
         var args = Array.prototype.slice.call(arguments);
         
         util.debug.apply(util, args);
     }
-}
-
-
+};
 
 /* EOF */
