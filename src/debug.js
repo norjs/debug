@@ -36,10 +36,13 @@ debug.isDevelopment = function () {
 
 /** */
 debug.log = function () {
+	function echo(x) {
+		if(typeof x === "string") { return x; }
+		return util.inspect(x);
+	}
     if(!debug.isProduction()) {
         var args = Array.prototype.slice.call(arguments);
-        
-        util.debug.apply(util, args);
+        util.debug( args.map(echo).join("") );
     }
 };
 
