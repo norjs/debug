@@ -23,4 +23,19 @@ Object.defineProperty(debug, '__line', {
 	}
 });
 
+
+debug.isProduction = function () {
+    return (prosess.env.NODE_ENV === "production");
+}
+
+debug.log = function () {
+    if(!debug.isProduction()) {
+        var args = Array.prototype.slice.call(arguments);
+        
+        util.debug.apply(util, args);
+    }
+}
+
+
+
 /* EOF */
