@@ -25,6 +25,12 @@ You can test for development/production mode (NODE_ENV) with the
 `debug.isProduction()` and `debug.isDevelopment()` which will return boolean 
 values, `true` or `false`.
 
+Start the app using `NODE_ENV=production node app.js` for production mode.
+
+Start the app using `NODE_ENV=development node app.js` for development mode.
+
+Default is development mode.
+
 Write debug log messages
 ------------------------
 
