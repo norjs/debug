@@ -1,10 +1,11 @@
 {
   "name": "nor-debug",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Debug helpers for Node.js apps",
   "main": "src/debug.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "node-lint src/ --config=lint.json"
   },
   "repository": {
     "type": "git",
@@ -13,6 +14,9 @@
   "keywords": [
     "debug"
   ],
+  "devDependencies": {
+    "lint": "*"
+  },
   "author": "Jaakko-Heikki Heusala <jheusala@iki.fi>",
   "license": "MIT",
   "bugs": {
