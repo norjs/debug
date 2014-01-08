@@ -46,9 +46,18 @@ function trim_values(x) {
 	return (''+x).replace(/ +$/, "").replace(/^ +/, "");
 }
 
+/** Helper function that can be called but does nothing */
+function do_nothing() {
+}
+
 /** */
 Object.defineProperty(debug, 'log', {
 	get: function(){
+
+		// Disable in production
+		if(debug.isProduction()) {
+			return do_nothing;
+		}
 
 		var stack = debug.__stack;
 		var location = stack[1].getFileName() || 'unknown';
@@ -64,11 +73,9 @@ Object.defineProperty(debug, 'log', {
 		}
 
 		return function () {
-		    if(!debug.isProduction()) {
-		        var args = Array.prototype.slice.call(arguments);
-				var cols = [];
-		        util.debug( [location+':'].concat(args).map(inspect_values).map(trim_values).join(" ") );
-		    }
+	        var args = Array.prototype.slice.call(arguments);
+			var cols = [];
+	        util.debug( [location+':'].concat(args).map(inspect_values).map(trim_values).join(" ") );
 		};
 	}
 });
