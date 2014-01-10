@@ -83,23 +83,23 @@ Object.defineProperty(debug, 'log', {
 		}
 
 		var stack = debug.__stack;
-		var location = stack[1].getFileName() || 'unknown';
+		var prefix = stack[1].getFileName() || 'unknown';
 
 		var line = stack[1].getLineNumber();
 		if(line) {
-			location += ':' + line;
+			prefix += ':' + line;
 		}
 
 		var func = stack[1].getFunctionName();
 		if(func) {
-			location += '@' + func+'()';
+			prefix += '@' + func+'()';
 		}
 
 		return function () {
 	        var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-		        util.debug( location + ': ' + line );
+		        util.debug( prefix + ': ' + line );
 			});
 		};
 	}
