@@ -7,6 +7,10 @@ var NODE_ENV = ENV.NODE_ENV || 'development';
 var debug = module.exports = {};
 var util = require("util");
 
+debug.setNodeENV = function(value) {
+	return NODE_ENV = (value === 'production') ? 'production' : 'development';
+};
+
 Object.defineProperty(debug, '__stack', {
 	get: function(){
 		var orig, err, stack;
