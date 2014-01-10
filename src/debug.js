@@ -73,6 +73,16 @@ function chop_long_values(limit) {
 function do_nothing() {
 }
 
+/** Get timestamp */
+function get_timestamp() {
+	function dd(x) {
+		x = ''+x;
+		return (x.length === 1) ? '0'+x : x;
+	}
+	var n = new Date();
+	return [n.getFullYear(), n.getMonth()+1, n.getDate()].map(dd).join('-') + ' ' + [n.getHours(), n.getMinutes(), n.getSeconds()].map(dd).join(':');
+}
+
 /** */
 Object.defineProperty(debug, 'log', {
 	get: function(){
@@ -83,7 +93,7 @@ Object.defineProperty(debug, 'log', {
 		}
 
 		var stack = debug.__stack;
-		var prefix = stack[1].getFileName() || 'unknown';
+		var prefix = get_timestamp() + ' ' + stack[1].getFileName() || 'unknown';
 
 		var line = stack[1].getLineNumber();
 		if(line) {
