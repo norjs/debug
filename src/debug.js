@@ -1,5 +1,9 @@
 /* Helpers for debuging */
 
+var ENV = (process && process.env) || {};
+var DEBUG_LINE_LIMIT = parseInt(ENV.DEBUG_LINE_LIMIT || 500, 10);
+var NODE_ENV = ENV.NODE_ENV || 'development';
+
 var debug = module.exports = {};
 var util = require("util");
 
@@ -27,7 +31,7 @@ Object.defineProperty(debug, '__line', {
 
 /** Returns true if the app is running in production mode */
 debug.isProduction = function () {
-	return (process.env.NODE_ENV === "production");
+	return (NODE_ENV === "production");
 };
 
 /** Returns true if the app is running in development mode */
@@ -94,7 +98,9 @@ Object.defineProperty(debug, 'log', {
 		return function () {
 	        var args = Array.prototype.slice.call(arguments);
 			var cols = [];
-	        util.debug( [location+':'].concat(args).map(inspect_values).map(trim_values).map(chop_long_values(300)).map(convert_specials).join(" ") );
+			args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+		        util.debug( location + ': ' + line );
+			});
 		};
 	}
 });
