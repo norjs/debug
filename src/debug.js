@@ -6,6 +6,7 @@ var NODE_ENV = ENV.NODE_ENV || 'development';
 
 var debug = module.exports = {};
 var util = require("util");
+var path = require("path");
 
 debug.setNodeENV = function(value) {
 	return NODE_ENV = (value === 'production') ? 'production' : 'development';
@@ -87,7 +88,9 @@ function get_timestamp() {
 	return [n.getFullYear(), n.getMonth()+1, n.getDate()].map(dd).join('-') + ' ' + [n.getHours(), n.getMinutes(), n.getSeconds()].map(dd).join(':');
 }
 
-/** */
+/** Writes debug log messages with timestamp, file locations, and function 
+ * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
+ * be passed on to `util.inspect()`. */
 Object.defineProperty(debug, 'log', {
 	get: function(){
 
@@ -118,5 +121,61 @@ Object.defineProperty(debug, 'log', {
 		};
 	}
 });
+
+/* Helper to get function name */
+function get_function_name(fun) {
+	var ret = ''+fun;
+	var len = 'function '.length;
+	if(ret.substr(0, len) === 'function ') {
+		ret = ret.substr(len);
+		ret = ret.substr(0, ret.indexOf('('));
+	} else {
+		ret = util.inspect(fun);
+	}
+	return ret;
+}
+
+/** Assert some things about a variable, otherwise throws an exception.
+ */
+Object.defineProperty(debug, 'assert', {
+	get: function assert_getter(){
+
+		var stack = debug.__stack;
+		var file = stack[1].getFileName() || 'unknown';
+		var line = stack[1].getLineNumber();
+		var func = stack[1].getFunctionName();
+
+		/**  */
+		function assert(value) {
+
+			/** Check that `value` is of type `Type`
+			 * @todo Implement here improved log message "Argument #NNN passed to 
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 *       function where the assert was used!
+			 */
+			function assert_instanceof(Type) {
+				if(value instanceof Type) { return this; }
+				var msg = '';
+				if(func) {
+					msg += 'Argument passed to ' + func;
+				} else {
+					msg += 'Assertion failed';
+				}
+				msg += ' (at ' + path.basename(file) + ':' + line +')';
+				msg += ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value);
+				throw new TypeError(msg);
+			} // assert_instanceof
+
+			var obj = {
+				'instanceof': assert_instanceof,
+				'instanceOf': assert_instanceof
+			};
+
+			return obj;
+		}; // assert
+
+		return assert;
+	} // assert_getter
+}); // debug.assert
 
 /* EOF */
