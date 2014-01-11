@@ -145,30 +145,71 @@ Object.defineProperty(debug, 'assert', {
 		var line = stack[1].getLineNumber();
 		var func = stack[1].getFunctionName();
 
+		// Initialize the start of msg
+		var prefix = '';
+		if(func) {
+			prefix += 'Argument passed to ' + func + '()';
+		} else {
+			prefix += 'Assertion failed';
+			prefix += ' (at ' + path.basename(file) + ':' + line +')';
+		}
+
 		/**  */
 		function assert(value) {
 
-			/** Check that `value` is of type `Type`
+			var value_ignored = false;
+
+			/** Ignore tests if `value` is same as `value2` */
+			function assert_ignore(value2) {
+				if(value === value2) {
+					value_ignored = true;
+				}
+				return this;
+			}
+
+			/** Check that `value` is instance of `Type`
 			 * @todo Implement here improved log message "Argument #NNN passed to 
 			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
 			 *       function where the assert was used!
 			 */
 			function assert_instanceof(Type) {
+				if(value_ignored) { return this; }
 				if(value instanceof Type) { return this; }
-				var msg = '';
-				if(func) {
-					msg += 'Argument passed to ' + func;
-				} else {
-					msg += 'Assertion failed';
-				}
-				msg += ' (at ' + path.basename(file) + ':' + line +')';
-				msg += ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value);
-				throw new TypeError(msg);
+				throw new TypeError( prefix + ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
+			/** Check that `value` is type of `type`
+			 * @param type {string} Name of type; string, number, object, ...
+			 * @todo Implement here improved log message "Argument #NNN passed to 
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 *       function where the assert was used!
+			 */
+			function assert_typeof(type) {
+				if(value_ignored) { return this; }
+				if(typeof value === ''+type) { return this; }
+				throw new TypeError( prefix + ' is not type of ' + type + ': ' + util.inspect(value) );
+			} // assert_instanceof
+
+			/** Check that `value` equals to `value2`
+			 * @param value2 {string} Another value
+			 * @todo Implement here improved log message "Argument #NNN passed to 
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 *       function where the assert was used!
+			 */
+			function assert_equals(value2) {
+				if(value_ignored) { return this; }
+				if(value === value2) { return this; }
+				throw new TypeError( prefix + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
+			} // assert_instanceof
+
+			/** The object that's returned */
 			var obj = {
+				'ignore': assert_ignore,
 				'instanceof': assert_instanceof,
-				'instanceOf': assert_instanceof
+				'instanceOf': assert_instanceof,
+				'typeof': assert_typeof,
+				'typeOf': assert_typeof,
+				'equals': assert_equals
 			};
 
 			return obj;
