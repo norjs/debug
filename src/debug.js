@@ -113,10 +113,14 @@ Object.defineProperty(debug, 'log', {
 		}
 
 		return function () {
-	        var args = Array.prototype.slice.call(arguments);
+			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-		        util.debug( prefix + ': ' + line );
+				if(util && (typeof util.debug === 'function̈́')) {
+					util.debug( prefix + ': ' + line );
+				} else if(console && (typeof console.log === 'function')) {
+					console.log( prefix + ': ' + line );
+				}
 			});
 		};
 	}
