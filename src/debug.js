@@ -116,9 +116,49 @@ Object.defineProperty(debug, 'log', {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if(util && (typeof util.debug === 'function̈́')) {
+				if( (typeof util === 'object') && (typeof util.debug === 'function') ) {
 					util.debug( prefix + ': ' + line );
-				} else if(console && (typeof console.log === 'function')) {
+				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+					console.log( prefix + ': ' + line );
+				}
+			});
+		};
+	}
+});
+
+/** Writes debug log messages with timestamp, file locations, and function 
+ * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
+ * be passed on to `util.inspect()`. */
+Object.defineProperty(debug, 'error', {
+	get: function(){
+
+		// Disable in production
+		//if(debug.isProduction()) {
+		//	return do_nothing;
+		//}
+
+		var stack = debug.__stack;
+		var prefix = get_timestamp() + ' ' + stack[1].getFileName() || 'unknown';
+
+		var line = stack[1].getLineNumber();
+		if(line) {
+			prefix += ':' + line;
+		}
+
+		var func = stack[1].getFunctionName();
+		if(func) {
+			prefix += '@' + func+'()';
+		}
+
+		return function () {
+			var args = Array.prototype.slice.call(arguments);
+			var cols = [];
+			args.map(function(x) {
+				return x.stack ? ''+x.stack : x;
+			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
+					util.error( 'ERROR: '+ prefix + ': ' + line );
+				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
 					console.log( prefix + ': ' + line );
 				}
 			});
