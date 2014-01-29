@@ -12,6 +12,12 @@ debug.setNodeENV = function(value) {
 	return NODE_ENV = (value === 'production') ? 'production' : 'development';
 };
 
+if(typeof Object.defineProperty !== 'function') {
+	Object.defineProperty = function(obj, prop, opts) {
+		// No-op function
+	};
+}
+
 Object.defineProperty(debug, '__stack', {
 	get: function(){
 		var orig, err, stack;
@@ -246,6 +252,15 @@ Object.defineProperty(debug, 'assert', {
 				throw new TypeError( prefix + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
 			} // assert_instanceof
 
+			/** Check that length of `value` equals to `value2`
+			 * @param value2 {number} Length
+			 */
+			function assert_length(value2) {
+				if(value_ignored) { return this; }
+				if(value.length === value2) { return this; }
+				throw new TypeError( prefix + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
+			} // assert_instanceof
+
 			/** The object that's returned */
 			var obj = {
 				'ignore': assert_ignore,
@@ -253,7 +268,8 @@ Object.defineProperty(debug, 'assert', {
 				'instanceOf': assert_instanceof,
 				'typeof': assert_typeof,
 				'typeOf': assert_typeof,
-				'equals': assert_equals
+				'equals': assert_equals,
+				'length': assert_length
 			};
 
 			return obj;
