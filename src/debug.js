@@ -8,11 +8,28 @@ var debug = module.exports = {};
 var util = require("util");
 var path = require("path");
 
+/* Features */
+
+var features = {};
+
+// Error.captureStackTrace
+if(typeof Error.captureStackTrace === 'function') {
+	features.Error_captureStackTrace = true;
+}
+
+// Object.defineProperty
+if(typeof Object.defineProperty === 'function') {
+	features.Object_defineProperty = true;
+}
+
+/* */
+
 debug.setNodeENV = function(value) {
 	return NODE_ENV = (value === 'production') ? 'production' : 'development';
 };
 
-if(typeof Object.defineProperty !== 'function') {
+// Compatibility hacks
+if(!features.Object_defineProperty) {
 	Object.defineProperty = function(obj, prop, opts) {
 		// No-op function
 	};
@@ -20,6 +37,11 @@ if(typeof Object.defineProperty !== 'function') {
 
 Object.defineProperty(debug, '__stack', {
 	get: function(){
+
+		if(!features.Error_captureStackTrace) {
+			return [];
+		}
+
 		var orig, err, stack;
 		try {
 			orig = Error.prepareStackTrace;
@@ -36,7 +58,12 @@ Object.defineProperty(debug, '__stack', {
 
 Object.defineProperty(debug, '__line', {
 	get: function(){
-		return debug.__stack[1].getLineNumber();
+		var stack = debug.__stack;
+		var tmp = stack[1];
+		if(!(tmp && (typeof tmp.getLineNumber === 'function'))) {
+			return;
+		}
+		return tmp.getLineNumber();
 	}
 });
 
@@ -106,17 +133,24 @@ Object.defineProperty(debug, 'log', {
 		}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp() + ' ' + stack[1].getFileName() || 'unknown';
+		var prefix = get_timestamp();
+		var line, func;
 
-		var line = stack[1].getLineNumber();
-		if(line) {
-			prefix += ':' + line;
+		if( stack && (stack.length >= 2) ) {
+
+			prefix += ' ' + stack[1].getFileName() || 'unknown';
+
+			line = stack[1].getLineNumber();
+			if(line) {
+				prefix += ':' + line;
+			}
+	
+			func = stack[1].getFunctionName();
+			if(func) {
+				prefix += '@' + func+'()';
+			}
 		}
 
-		var func = stack[1].getFunctionName();
-		if(func) {
-			prefix += '@' + func+'()';
-		}
 
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
@@ -144,16 +178,22 @@ Object.defineProperty(debug, 'error', {
 		//}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp() + ' ' + stack[1].getFileName() || 'unknown';
+		var prefix = get_timestamp();
+		var line, func;
 
-		var line = stack[1].getLineNumber();
-		if(line) {
-			prefix += ':' + line;
-		}
+		if(stack && (stack.length >= 2)) {
 
-		var func = stack[1].getFunctionName();
-		if(func) {
-			prefix += '@' + func+'()';
+			prefix += ' ' + stack[1].getFileName() || 'unknown';
+	
+			line = stack[1].getLineNumber();
+			if(line) {
+				prefix += ':' + line;
+			}
+	
+			func = stack[1].getFunctionName();
+			if(func) {
+				prefix += '@' + func+'()';
+			}
 		}
 
 		return function () {
@@ -191,9 +231,13 @@ Object.defineProperty(debug, 'assert', {
 	get: function assert_getter(){
 
 		var stack = debug.__stack;
-		var file = stack[1].getFileName() || 'unknown';
-		var line = stack[1].getLineNumber();
-		var func = stack[1].getFunctionName();
+		var file, line, func;
+
+		if(stack && (stack.length >= 2)) {
+			file = stack[1].getFileName() || 'unknown';
+			line = stack[1].getLineNumber();
+			func = stack[1].getFunctionName();
+		}
 
 		// Initialize the start of msg
 		var prefix = '';
