@@ -148,7 +148,7 @@ Object.defineProperty(debug, 'log', {
 	
 			func = stack[1].getFunctionName();
 			if(func) {
-				prefix += '@' + func+'()';
+				prefix += ' @' + func+'()';
 			}
 		}
 
@@ -193,7 +193,7 @@ Object.defineProperty(debug, 'error', {
 	
 			func = stack[1].getFunctionName();
 			if(func) {
-				prefix += '@' + func+'()';
+				prefix += ' @' + func+'()';
 			}
 		}
 
@@ -246,7 +246,7 @@ Object.defineProperty(debug, 'assert', {
 			prefix += 'Argument passed to ' + func + '()';
 		} else {
 			prefix += 'Assertion failed';
-			prefix += ' (at ' + path.basename(file) + ':' + line +')';
+			prefix += ' (at ' + file + ':' + line +')';
 		}
 
 		/**  */
@@ -345,5 +345,41 @@ debug.inspectMethod = function hijack_method(obj, method) {
 	};
 };
 
+/** */
+function get_location(x, short) {
+	var file = (x && x.getFileName && x.getFileName()) || '';
+	var line = (x && x.getLineNumber && x.getLineNumber()) || '';
+	var func = (x && x.getFunctionName && x.getFunctionName()) || '';
+
+	if(short && file) {
+		file = path.basename(file);
+	}
+
+	var out = file || 'unknown';
+	if(line) { out += ':' + line; }
+	if(func) { out += ' @' + func + '()'; }
+	return out;
+}
+
+/** Builds a wrapper function that will print warning when an obsolete method is called
+ * @params self {object} The `this` element of the method/function
+ * @params obsolete_func {string} The method name that was obsolete
+ * @params new_func {string} The new method name that should be used
+ * @returns {function} The wrapped function that will print a warning and otherwise behave as the method would normally.
+ */
+debug.obsoleteMethod = function(self, obsolete_func, func) {
+	if(typeof self !== 'function') {
+		debug.assert(self).typeOf('object');
+	}
+	debug.assert(obsolete_func).typeOf('string');
+	debug.assert(func).typeOf('string');
+	debug.assert(self[func]).typeOf('function');
+	return function() {
+		var args = Array.prototype.slice.call(arguments);
+		var stack = [].concat(debug.__stack);
+		debug.log('Warning! An obsolete method .'+ obsolete_func + '() used at ' + get_location(stack[1]) + ' -- use .' + func + '() instead.' );
+		return self[func].apply(this, args);
+	};
+};
 
 /* EOF */
