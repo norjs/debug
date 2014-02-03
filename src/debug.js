@@ -324,7 +324,9 @@ Object.defineProperty(debug, 'assert', {
 	} // assert_getter
 }); // debug.assert
 
-/** Hijacks 3rd party method call to print debug information when it is called */
+/** Hijacks 3rd party method call to print debug information when it is called.
+ * Use it like `debug.inspectMethod(res, 'write');` to hijack `res.write()`.
+ */
 debug.inspectMethod = function hijack_method(obj, method) {
 	var orig = obj[method];
 	if(!debug.inspectMethod._id) {
