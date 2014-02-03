@@ -25,7 +25,8 @@ if(typeof Object.defineProperty === 'function') {
 /* */
 
 debug.setNodeENV = function(value) {
-	return NODE_ENV = (value === 'production') ? 'production' : 'development';
+	NODE_ENV = (value === 'production') ? 'production' : 'development';
+	return NODE_ENV;
 };
 
 // Compatibility hacks
@@ -317,7 +318,7 @@ Object.defineProperty(debug, 'assert', {
 			};
 
 			return obj;
-		}; // assert
+		} // assert
 
 		return assert;
 	} // assert_getter
@@ -326,8 +327,11 @@ Object.defineProperty(debug, 'assert', {
 /** Hijacks 3rd party method call to print debug information when it is called */
 debug.inspectMethod = function hijack_method(obj, method) {
 	var orig = obj[method];
+	if(!debug.inspectMethod._id) {
+		debug.inspectMethod._id = 0;
+	}
 	obj[method] = function() {
-		var x = (id += 1);
+		var x = (debug.inspectMethod._id += 1);
 		var args = Array.prototype.slice.call(arguments);
 		var stack = [].concat(debug.__stack);
 		debug.log('#' + x + ': Call to ' + method + ' (' + args.map(inspect_values).join(', ') + ') ...');
