@@ -323,4 +323,21 @@ Object.defineProperty(debug, 'assert', {
 	} // assert_getter
 }); // debug.assert
 
+/** Hijacks 3rd party method call to print debug information when it is called */
+debug.inspectMethod = function hijack_method(obj, method) {
+	var orig = obj[method];
+	obj[method] = function() {
+		var x = (id += 1);
+		var args = Array.prototype.slice.call(arguments);
+		var stack = [].concat(debug.__stack);
+		debug.log('#' + x + ': Call to ' + method + ' (' + args.map(inspect_values).join(', ') + ') ...');
+		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
+		debug.log('#' + x + ": stack = ", stack.map(function(x) { return x.getFileName() + ':' + x.getLineNumber(); }).join(' -> ') );
+		var ret = orig.apply(obj, args);
+		debug.log('#' + x + ': returned: ', ret);
+		return ret;
+	};
+};
+
+
 /* EOF */
