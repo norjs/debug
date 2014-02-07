@@ -3,6 +3,11 @@ nor-debug
 
 Debug helpers for Node.js apps.
 
+TODO
+----
+
+We use [Trello board](//trello.com/b/w2WOISiE/nor-debug) to organize development and keep track on things to do.
+
 Installation
 ------------
 

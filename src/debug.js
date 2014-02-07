@@ -7,6 +7,7 @@ var NODE_ENV = ENV.NODE_ENV || 'development';
 var debug = module.exports = {};
 var util = require("util");
 var path = require("path");
+var is = require("nor-is");
 
 /* Features */
 
@@ -306,6 +307,18 @@ Object.defineProperty(debug, 'assert', {
 				throw new TypeError( prefix + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
 			} // assert_instanceof
 
+			/** Check `value` with nor-is, meaning it will check that `require('nor-is')[value2](value)` returns true.
+			 * @param value2 {mixed} Any value type, passed to nor-is function.
+			 */
+			function assert_is(value2) {
+				if(value_ignored) { return this; }
+				if(typeof is[value2] !== 'function') {
+					throw new TypeError( prefix + ' has no support for checking ' + value2 );
+				}
+				if(is[value2](value)) { return this; }
+				throw new TypeError( prefix + ' is not ' + value2 + ': ' + util.inspect(value) );
+			} // assert_instanceof
+
 			/** The object that's returned */
 			var obj = {
 				'ignore': assert_ignore,
@@ -314,7 +327,8 @@ Object.defineProperty(debug, 'assert', {
 				'typeof': assert_typeof,
 				'typeOf': assert_typeof,
 				'equals': assert_equals,
-				'length': assert_length
+				'length': assert_length,
+				'is': assert_is
 			};
 
 			return obj;
