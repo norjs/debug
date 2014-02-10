@@ -319,6 +319,18 @@ Object.defineProperty(debug, 'assert', {
 				throw new TypeError( prefix + ' is not ' + value2 + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
+			/** Check `value` matches pattern `value2`.
+			 * @param value2 {RegExp} The pattern as `RegExp` object
+			 */
+			function assert_pattern(value2) {
+				if(value_ignored) { return this; }
+				if(!is.objOf(value2, RegExp)) {
+					throw new TypeError( prefix + ' has no support for other than RegExp: ' + util.inspect(value2) );
+				}
+				if(value2.test(value)) { return this; }
+				throw new TypeError( prefix + ' does not match ' + value2 + ': ' + util.inspect(value) );
+			} // assert_instanceof
+
 			/** The object that's returned */
 			var obj = {
 				'ignore': assert_ignore,
@@ -328,7 +340,8 @@ Object.defineProperty(debug, 'assert', {
 				'typeOf': assert_typeof,
 				'equals': assert_equals,
 				'length': assert_length,
-				'is': assert_is
+				'is': assert_is,
+				'pattern': assert_pattern
 			};
 
 			return obj;
