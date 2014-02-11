@@ -301,7 +301,7 @@ Object.defineProperty(debug, 'info', {
 				return x.stack ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
-					util.error( 'WARNING: '+ prefix + ': ' + line );
+					util.error( prefix + ': ' + line );
 				} else if( (typeof console === 'object') && (typeof console.info === 'function') ) {
 					console.info( prefix + ': ' + line );
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
