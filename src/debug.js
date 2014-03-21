@@ -38,7 +38,7 @@ if(!features.Object_defineProperty) {
 }
 
 Object.defineProperty(debug, '__stack', {
-	get: function(){
+	get: function stack_getter(){
 
 		if(!features.Error_captureStackTrace) {
 			return [];
@@ -49,7 +49,7 @@ Object.defineProperty(debug, '__stack', {
 			orig = Error.prepareStackTrace;
 			Error.prepareStackTrace = function(_, stack){ return stack; };
 			err = new Error();
-			Error.captureStackTrace(err, arguments.callee);
+			Error.captureStackTrace(err, stack_getter);
 			stack = err.stack;
 		} finally {
 			Error.prepareStackTrace = orig;
