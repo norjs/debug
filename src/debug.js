@@ -6,8 +6,11 @@ var NODE_ENV = ENV.NODE_ENV || 'development';
 
 var debug = module.exports = {};
 var util = require("util");
-var path = require("path");
+var PATH = require("path");
 var is = require("nor-is");
+
+/* Defaults */
+debug.defaults = {};
 
 /* Features */
 
@@ -23,7 +26,22 @@ if(typeof Object.defineProperty === 'function') {
 	features.Object_defineProperty = true;
 }
 
+/* Pretty print paths */
+function print_path(path) {
+	if(debug.defaults.project_root === undefined) {
+		return path;
+	}
+	return PATH.relative(debug.defaults.project_root, path);
+}
+
 /* */
+
+debug.setProjectRoot = function(value) {
+	debug.assert(value).is('string');
+	debug.defaults.project_root = value;
+	debug.log('Paths are now relative to ', debug.defaults.project_root);
+	return debug.defaults.project_root;
+};
 
 debug.setNodeENV = function(value) {
 	NODE_ENV = (value === 'production') ? 'production' : 'development';
@@ -140,7 +158,7 @@ Object.defineProperty(debug, 'log', {
 
 		if( stack && (stack.length >= 2) ) {
 
-			prefix += ' ' + stack[1].getFileName() || 'unknown';
+			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 
 			line = stack[1].getLineNumber();
 			if(line) {
@@ -185,7 +203,7 @@ Object.defineProperty(debug, 'error', {
 
 		if(stack && (stack.length >= 2)) {
 
-			prefix += ' ' + stack[1].getFileName() || 'unknown';
+			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 	
 			line = stack[1].getLineNumber();
 			if(line) {
@@ -233,7 +251,7 @@ Object.defineProperty(debug, 'warn', {
 
 		if(stack && (stack.length >= 2)) {
 
-			prefix += ' ' + stack[1].getFileName() || 'unknown';
+			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 	
 			line = stack[1].getLineNumber();
 			if(line) {
@@ -281,7 +299,7 @@ Object.defineProperty(debug, 'info', {
 
 		if(stack && (stack.length >= 2)) {
 
-			prefix += ' ' + stack[1].getFileName() || 'unknown';
+			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 	
 			line = stack[1].getLineNumber();
 			if(line) {
@@ -334,7 +352,7 @@ Object.defineProperty(debug, 'assert', {
 		var file, line, func;
 
 		if(stack && (stack.length >= 2)) {
-			file = stack[1].getFileName() || 'unknown';
+			file = print_path(stack[1].getFileName()) || 'unknown';
 			line = stack[1].getLineNumber();
 			func = stack[1].getFunctionName();
 		}
@@ -463,7 +481,7 @@ debug.inspectMethod = function hijack_method(obj, method) {
 		var stack = [].concat(debug.__stack);
 		debug.log('#' + x + ': Call to ' + method + ' (' + args.map(inspect_values).join(', ') + ') ...');
 		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
-		debug.log('#' + x + ": stack = ", stack.map(function(x) { return x.getFileName() + ':' + x.getLineNumber(); }).join(' -> ') );
+		debug.log('#' + x + ": stack = ", stack.map(function(x) { return print_path(x.getFileName()) + ':' + x.getLineNumber(); }).join(' -> ') );
 		var ret = orig.apply(obj, args);
 		debug.log('#' + x + ': returned: ', ret);
 		return ret;
@@ -472,12 +490,12 @@ debug.inspectMethod = function hijack_method(obj, method) {
 
 /** */
 function get_location(x, short) {
-	var file = (x && x.getFileName && x.getFileName()) || '';
+	var file = (x && x.getFileName && print_path(x.getFileName())) || '';
 	var line = (x && x.getLineNumber && x.getLineNumber()) || '';
 	var func = (x && x.getFunctionName && x.getFunctionName()) || '';
 
 	if(short && file) {
-		file = path.basename(file);
+		file = PATH.basename(file);
 	}
 
 	var out = file || 'unknown';
