@@ -6,12 +6,11 @@ var NODE_ENV = ENV.NODE_ENV || 'development';
 
 var debug = module.exports = {};
 var util = require("util");
+var FS = require("fs");
 var PATH = require("path");
 var is = require("nor-is");
 
-var ansi = function(x) { return x; }
-var stdout_cursor, stderr_cursor;
-
+var ansi, stdout_cursor, stderr_cursor;
 if(!process.browser) {
 	ansi = require('ansi');
 	stdout_cursor = ansi(process.stdout);
@@ -145,9 +144,12 @@ function chop_long_values(limit) {
 }
 
 /** Replace full path names */
-function chop_paths(str) {
-	str = ''+str;
-	return ;
+function chop_paths(orig_str) {
+	var str = ''+orig_str;
+	str = str.replace(/(\/[a-zA-Z0-9]+)+/gi, function(match) {
+		return match;
+	});
+	return str;
 }
 
 /** Helper function that can be called but does nothing */
