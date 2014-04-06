@@ -144,10 +144,13 @@ function chop_long_values(limit) {
 }
 
 /** Replace full path names */
-function chop_paths(orig_str) {
-	var str = ''+orig_str;
-	str = str.replace(/(\/[a-zA-Z0-9]+)+/gi, function(match) {
-		return match;
+function chop_long_paths(str) {
+	str = ''+str;
+	str = str.replace(/(\/[^/:\)\(]+)+/gi, function(path) {
+		if(FS.existsSync(path)) {
+			return print_path(path);
+		}
+		return path;
 	});
 	return str;
 }
@@ -204,9 +207,9 @@ Object.defineProperty(debug, 'log', {
 				var cols = [];
 				args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 					if( (typeof util === 'object') && (typeof util.debug === 'function') ) {
-						util.debug( prefix + ': ' + line );
+						util.debug( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-						console.log( prefix + ': ' + line );
+						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					}
 				});
 			} finally {
@@ -255,21 +258,21 @@ Object.defineProperty(debug, 'error', {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-						util.error( 'ERROR: '+ prefix + ': ' + line );
+						util.error( 'ERROR: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stderr_cursor.reset(); }
 					}
 				} else if( (typeof console === 'object') && (typeof console.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-						console.error( prefix + ': ' + line );
+						console.error( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stderr_cursor.reset(); }
 					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.error(stdout_cursor); }
-						console.log( prefix + ': ' + line );
+						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stdout_cursor.reset(); }
 					}
@@ -318,7 +321,7 @@ Object.defineProperty(debug, 'warn', {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
-						util.error( 'WARNING: '+ prefix + ': ' + line );
+						util.error( 'WARNING: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stderr_cursor.reset(); }
 					}
@@ -327,14 +330,14 @@ Object.defineProperty(debug, 'warn', {
 
 					try {
 						if(ansi) { debug.defaults.cursors.warning(stdout_cursor); }
-						console.warn( prefix + ': ' + line );
+						console.warn( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stdout_cursor.reset(); }
 					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.warning(stdout_cursor); }
-						console.log( prefix + ': ' + line );
+						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stdout_cursor.reset(); }
 					}
@@ -383,21 +386,21 @@ Object.defineProperty(debug, 'info', {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
-						util.error( prefix + ': ' + line );
+						util.error( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stderr_cursor.reset(); }
 					}
 				} else if( (typeof console === 'object') && (typeof console.info === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.info(stdout_cursor); }
-						console.info( prefix + ': ' + line );
+						console.info( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stdout_cursor.reset(); }
 					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.info(stdout_cursor); }
-						console.log( prefix + ': ' + line );
+						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} finally {
 						if(ansi) { stdout_cursor.reset(); }
 					}
