@@ -9,8 +9,20 @@ var util = require("util");
 var PATH = require("path");
 var is = require("nor-is");
 
+var ansi = require('ansi');
+var stdout_cursor = ansi(process.stdout);
+var stderr_cursor = ansi(process.stderr);
+
 /* Defaults */
 debug.defaults = {};
+
+debug.defaults.cursors = {};
+
+debug.defaults.cursors.error = function(cursor) { return cursor.brightRed(); };
+debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow(); };
+debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
+debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
+
 
 /* Features */
 
@@ -173,15 +185,20 @@ Object.defineProperty(debug, 'log', {
 
 
 		return function () {
-			var args = Array.prototype.slice.call(arguments);
-			var cols = [];
-			args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (typeof util === 'object') && (typeof util.debug === 'function') ) {
-					util.debug( prefix + ': ' + line );
-				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					console.log( prefix + ': ' + line );
-				}
-			});
+			try {
+				debug.defaults.cursors.log(stdout_cursor);
+				var args = Array.prototype.slice.call(arguments);
+				var cols = [];
+				args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+					if( (typeof util === 'object') && (typeof util.debug === 'function') ) {
+						util.debug( prefix + ': ' + line );
+					} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+						console.log( prefix + ': ' + line );
+					}
+				});
+			} finally {
+				stdout_cursor.reset()
+			}
 		};
 	}
 });
@@ -223,11 +240,26 @@ Object.defineProperty(debug, 'error', {
 				return x.stack ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
-					util.error( 'ERROR: '+ prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.error(stderr_cursor);
+						util.error( 'ERROR: '+ prefix + ': ' + line );
+					} finally {
+						stderr_cursor.reset()
+					}
 				} else if( (typeof console === 'object') && (typeof console.error === 'function') ) {
-					console.error( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.error(stderr_cursor);
+						console.error( prefix + ': ' + line );
+					} finally {
+						stderr_cursor.reset()
+					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					console.log( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.error(stdout_cursor);
+						console.log( prefix + ': ' + line );
+					} finally {
+						stdout_cursor.reset()
+					}
 				}
 			});
 		};
@@ -271,11 +303,28 @@ Object.defineProperty(debug, 'warn', {
 				return x.stack ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
-					util.error( 'WARNING: '+ prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.warning(stderr_cursor);
+						util.error( 'WARNING: '+ prefix + ': ' + line );
+					} finally {
+						stderr_cursor.reset()
+					}
+
 				} else if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
-					console.warn( prefix + ': ' + line );
+
+					try {
+						debug.defaults.cursors.warning(stdout_cursor);
+						console.warn( prefix + ': ' + line );
+					} finally {
+						stdout_cursor.reset()
+					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					console.log( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.warning(stdout_cursor);
+						console.log( prefix + ': ' + line );
+					} finally {
+						stdout_cursor.reset()
+					}
 				}
 			});
 		};
@@ -319,11 +368,26 @@ Object.defineProperty(debug, 'info', {
 				return x.stack ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
-					util.error( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.info(stderr_cursor);
+						util.error( prefix + ': ' + line );
+					} finally {
+						stderr_cursor.reset()
+					}
 				} else if( (typeof console === 'object') && (typeof console.info === 'function') ) {
-					console.info( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.info(stdout_cursor);
+						console.info( prefix + ': ' + line );
+					} finally {
+						stdout_cursor.reset()
+					}
 				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					console.log( prefix + ': ' + line );
+					try {
+						debug.defaults.cursors.info(stdout_cursor);
+						console.log( prefix + ': ' + line );
+					} finally {
+						stdout_cursor.reset()
+					}
 				}
 			});
 		};
