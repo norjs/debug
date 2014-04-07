@@ -147,7 +147,7 @@ function chop_long_values(limit) {
 function chop_long_paths(str) {
 	str = ''+str;
 	str = str.replace(/(\/[^/:\)\(]+)+/gi, function(path) {
-		if(FS.existsSync(path)) {
+		if(FS && is.func(FS.existsSync) && FS.existsSync(path)) {
 			return print_path(path);
 		}
 		return path;
