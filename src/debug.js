@@ -253,7 +253,7 @@ Object.defineProperty(debug, 'error', {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(function(x) {
-				return x.stack ? ''+x.stack : x;
+				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
@@ -316,7 +316,7 @@ Object.defineProperty(debug, 'warn', {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(function(x) {
-				return x.stack ? ''+x.stack : x;
+				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
@@ -381,7 +381,7 @@ Object.defineProperty(debug, 'info', {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
 			args.map(function(x) {
-				return x.stack ? ''+x.stack : x;
+				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
 				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
