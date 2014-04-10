@@ -13,8 +13,8 @@ var is = require("nor-is");
 var ansi, stdout_cursor, stderr_cursor;
 if(!process.browser) {
 	ansi = require('ansi');
-	stdout_cursor = ansi(process.stdout);
-	stderr_cursor = ansi(process.stderr);
+	stdout_cursor = ansi(process.stdout, {enabled:true});
+	stderr_cursor = ansi(process.stderr, {enabled:true});
 }
 
 /* Defaults */
