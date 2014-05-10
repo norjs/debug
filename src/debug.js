@@ -423,28 +423,32 @@ function get_function_name(fun) {
 	return ret;
 }
 
+/** Returns prefix for assert messages */
+function get_assert_prefix() {
+	var stack = debug.__stack;
+	var file, line, func;
+
+	if(stack && (stack.length >= 3)) {
+		file = print_path(stack[2].getFileName()) || 'unknown';
+		line = stack[2].getLineNumber();
+		func = stack[2].getFunctionName();
+	}
+
+	// Initialize the start of msg
+	var prefix = '';
+	if(func) {
+		prefix += 'Argument passed to ' + func + '()';
+	} else {
+		prefix += 'Assertion failed';
+		prefix += ' (at ' + file + ':' + line +')';
+	}
+	return prefix;
+}
+
 /** Assert some things about a variable, otherwise throws an exception.
  */
 Object.defineProperty(debug, 'assert', {
 	get: function assert_getter(){
-
-		var stack = debug.__stack;
-		var file, line, func;
-
-		if(stack && (stack.length >= 2)) {
-			file = print_path(stack[1].getFileName()) || 'unknown';
-			line = stack[1].getLineNumber();
-			func = stack[1].getFunctionName();
-		}
-
-		// Initialize the start of msg
-		var prefix = '';
-		if(func) {
-			prefix += 'Argument passed to ' + func + '()';
-		} else {
-			prefix += 'Assertion failed';
-			prefix += ' (at ' + file + ':' + line +')';
-		}
 
 		/**  */
 		function assert(value) {
@@ -467,7 +471,7 @@ Object.defineProperty(debug, 'assert', {
 			function assert_instanceof(Type) {
 				if(value_ignored) { return this; }
 				if(value instanceof Type) { return this; }
-				throw new TypeError( prefix + ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value) );
+				throw new TypeError( get_assert_prefix() + ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
 			/** Check that `value` is type of `type`
@@ -479,7 +483,7 @@ Object.defineProperty(debug, 'assert', {
 			function assert_typeof(type) {
 				if(value_ignored) { return this; }
 				if(typeof value === ''+type) { return this; }
-				throw new TypeError( prefix + ' is not type of ' + type + ': ' + util.inspect(value) );
+				throw new TypeError( get_assert_prefix() + ' is not type of ' + type + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
 			/** Check that `value` equals to `value2`
@@ -491,7 +495,7 @@ Object.defineProperty(debug, 'assert', {
 			function assert_equals(value2) {
 				if(value_ignored) { return this; }
 				if(value === value2) { return this; }
-				throw new TypeError( prefix + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
+				throw new TypeError( get_assert_prefix() + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
 			} // assert_instanceof
 
 			/** Check that length of `value` equals to `value2`
@@ -500,7 +504,7 @@ Object.defineProperty(debug, 'assert', {
 			function assert_length(value2) {
 				if(value_ignored) { return this; }
 				if(value.length === value2) { return this; }
-				throw new TypeError( prefix + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
+				throw new TypeError( get_assert_prefix() + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
 			} // assert_instanceof
 
 			/** Check `value` with nor-is, meaning it will check that `require('nor-is')[value2](value)` returns true.
@@ -509,10 +513,10 @@ Object.defineProperty(debug, 'assert', {
 			function assert_is(value2) {
 				if(value_ignored) { return this; }
 				if(typeof is[value2] !== 'function') {
-					throw new TypeError( prefix + ' has no support for checking ' + value2 );
+					throw new TypeError( get_assert_prefix() + ' has no support for checking ' + value2 );
 				}
 				if(is[value2](value)) { return this; }
-				throw new TypeError( prefix + ' is not ' + value2 + ': ' + util.inspect(value) );
+				throw new TypeError( get_assert_prefix() + ' is not ' + value2 + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
 			/** Check `value` matches pattern `value2`.
@@ -521,10 +525,10 @@ Object.defineProperty(debug, 'assert', {
 			function assert_pattern(value2) {
 				if(value_ignored) { return this; }
 				if(!is.objOf(value2, RegExp)) {
-					throw new TypeError( prefix + ' has no support for other than RegExp: ' + util.inspect(value2) );
+					throw new TypeError( get_assert_prefix() + ' has no support for other than RegExp: ' + util.inspect(value2) );
 				}
 				if(value2.test(value)) { return this; }
-				throw new TypeError( prefix + ' does not match ' + value2 + ': ' + util.inspect(value) );
+				throw new TypeError( get_assert_prefix() + ' does not match ' + value2 + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
 			/** The object that's returned */
