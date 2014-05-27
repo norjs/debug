@@ -10,6 +10,9 @@ var FS = require("fs");
 var PATH = require("path");
 var is = require("nor-is");
 
+var node_0_11_or_newer = (process.versions && is.string(process.versions.node) && parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
+var disable_util = node_0_11_or_newer;
+
 var ansi, stdout_cursor, stderr_cursor;
 if(!process.browser) {
 	ansi = require('ansi');
@@ -206,7 +209,7 @@ Object.defineProperty(debug, 'log', {
 				var args = Array.prototype.slice.call(arguments);
 				var cols = [];
 				args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-					if( (typeof util === 'object') && (typeof util.debug === 'function') ) {
+					if( (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
 						util.debug( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
 					} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
 						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
@@ -255,7 +258,7 @@ Object.defineProperty(debug, 'error', {
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
+				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
 						util.error( 'ERROR: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
@@ -318,7 +321,7 @@ Object.defineProperty(debug, 'warn', {
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
+				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
 						util.error( 'WARNING: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
@@ -383,7 +386,7 @@ Object.defineProperty(debug, 'info', {
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (typeof util === 'object') && (typeof util.error === 'function') ) {
+				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 					try {
 						if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
 						util.error( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
