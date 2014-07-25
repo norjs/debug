@@ -30,7 +30,6 @@ debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow()
 debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
 debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
 
-
 /* Features */
 
 var features = {};
@@ -172,6 +171,95 @@ function get_timestamp() {
 	return [n.getFullYear(), n.getMonth()+1, n.getDate()].map(dd).join('-') + ' ' + [n.getHours(), n.getMinutes(), n.getSeconds()].map(dd).join(':');
 }
 
+/** Write debug log message */
+function print_error(line) {
+	try {
+		if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
+		
+		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+			util.error( 'ERROR: '+ line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+			console.error( line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+			console.log( line );
+			return;
+		}
+
+	} finally {
+		if(ansi) { stderr_cursor.reset(); }
+	}
+}
+
+/** Write warning message */
+function print_warning(line) {
+	try {
+		if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
+
+		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+			util.error( 'WARNING: '+ line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+			console.warn( line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+			console.log( line );
+			return;
+		}
+
+	} finally {
+		if(ansi) { stderr_cursor.reset(); }
+	}
+}
+
+/** Print informative log messages */
+function print_info(line) {
+	try {
+		if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
+
+		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+			util.error( line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.info === 'function') ) {
+			console.info( line );
+			return;
+		}
+
+		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+			console.log( line );
+			return;
+		}
+	} finally {
+		if(ansi) { stderr_cursor.reset(); }
+	}
+}
+
+/** */
+function print_log(line) {
+
+	if( (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
+		util.debug( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+		console.log( line );
+		return;
+	}
+
+}
+
 /** Writes debug log messages with timestamp, file locations, and function 
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
  * be passed on to `util.inspect()`. */
@@ -208,12 +296,9 @@ Object.defineProperty(debug, 'log', {
 				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				var args = Array.prototype.slice.call(arguments);
 				var cols = [];
+				print_log( chop_long_paths(prefix) + ': ');
 				args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-					if( (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
-						util.debug( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					}
+					print_log( '> ' + chop_long_paths(line) );
 				});
 			} finally {
 				if(ansi) { stdout_cursor.reset(); }
@@ -253,33 +338,14 @@ Object.defineProperty(debug, 'error', {
 		}
 
 		return function () {
+
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
+			print_error( chop_long_paths(prefix) + ': ' );
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-						util.error( 'ERROR: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stderr_cursor.reset(); }
-					}
-				} else if( (typeof console === 'object') && (typeof console.error === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-						console.error( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stderr_cursor.reset(); }
-					}
-				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.error(stdout_cursor); }
-						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stdout_cursor.reset(); }
-					}
-				}
+				print_error( '> ' + chop_long_paths(line) );
 			});
 		};
 	}
@@ -318,33 +384,11 @@ Object.defineProperty(debug, 'warn', {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
+			print_warning( chop_long_paths(prefix) + ': ' );
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
-						util.error( 'WARNING: '+ chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stderr_cursor.reset(); }
-					}
-
-				} else if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
-
-					try {
-						if(ansi) { debug.defaults.cursors.warning(stdout_cursor); }
-						console.warn( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stdout_cursor.reset(); }
-					}
-				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.warning(stdout_cursor); }
-						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stdout_cursor.reset(); }
-					}
-				}
+				print_warning( '> ' + chop_long_paths(line) );
 			});
 		};
 	}
@@ -383,31 +427,11 @@ Object.defineProperty(debug, 'info', {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			var cols = [];
+			print_info( chop_long_paths(prefix) + ': ' );
 			args.map(function(x) {
 				return (x && x.stack) ? ''+x.stack : x;
 			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
-				if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
-						util.error( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stderr_cursor.reset(); }
-					}
-				} else if( (typeof console === 'object') && (typeof console.info === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.info(stdout_cursor); }
-						console.info( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stdout_cursor.reset(); }
-					}
-				} else if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-					try {
-						if(ansi) { debug.defaults.cursors.info(stdout_cursor); }
-						console.log( chop_long_paths(prefix) + ': ' + chop_long_paths(line) );
-					} finally {
-						if(ansi) { stdout_cursor.reset(); }
-					}
-				}
+				print_info( '> ' + chop_long_paths(line) );
 			});
 		};
 	}
