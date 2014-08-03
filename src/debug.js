@@ -513,6 +513,20 @@ Object.defineProperty(debug, 'assert', {
 				throw new TypeError( get_assert_prefix() + ' is not type of ' + type + ': ' + util.inspect(value) );
 			} // assert_instanceof
 
+			/** Changes the chain to test the property by name `key` from object `value`
+			 * @param value2 {string} Property name
+			 */
+			function assert_property(key) {
+				if(value_ignored) { return this; }
+
+				if(!is.obj(value)) {
+					throw new TypeError( get_assert_prefix() + ' cannot read property ' + util.inspect(key) + ' from non-object ' + util.inspect(value) );
+				}
+
+				return assert(value[key]);
+
+			} // assert_property
+
 			/** Check that `value` equals to `value2`
 			 * @param value2 {string} Another value
 			 * @todo Implement here improved log message "Argument #NNN passed to 
@@ -523,15 +537,48 @@ Object.defineProperty(debug, 'assert', {
 				if(value_ignored) { return this; }
 				if(value === value2) { return this; }
 				throw new TypeError( get_assert_prefix() + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
-			} // assert_instanceof
+			} // assert_equals
 
-			/** Check that length of `value` equals to `value2`
+			/** Check that `value` is between range `min` and `max`
+			 * @param min {string} Optional. Minimum value accepted. Set to `undefined` to accept any value.
+			 * @param max {string} Optional. Maximum value accepted.
+			 * @todo Implement here improved log message "Argument #NNN passed to 
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 *       function where the assert was used!
+			 */
+			function assert_range(min, max) {
+				if(value_ignored) { return this; }
+				var min_accepted = is.defined(min) ? (value >= min) : true;
+				var max_accepted = is.defined(max) ? (value <= max) : true;
+				if( min_accepted && max_accepted ) { return this; }
+				throw new TypeError( get_assert_prefix() + ' value ' + util.inspect(value) + ' not in range ' + util.inspect(min) + ' .. ' + util.inspect(max) );
+			} // assert_range
+
+			/** Check that length of `value.length` equals to `value2`
 			 * @param value2 {number} Length
 			 */
 			function assert_length(value2) {
 				if(value_ignored) { return this; }
 				if(value.length === value2) { return this; }
 				throw new TypeError( get_assert_prefix() + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
+			} // assert_length
+
+			/** Check that length of `value.length` is equal or greater than `value2`
+			 * @param value2 {number} Length
+			 */
+			function assert_min_length(value2) {
+				if(value_ignored) { return this; }
+				if(value.length >= value2) { return this; }
+				throw new TypeError( get_assert_prefix() + ' length less than: ' + util.inspect(value.length) + ' < ' + util.inspect(value2) );
+			} // assert_instanceof
+
+			/** Check that length of `value.length` is equal or less than `value2`
+			 * @param value2 {number} Length
+			 */
+			function assert_max_length(value2) {
+				if(value_ignored) { return this; }
+				if(value.length <= value2) { return this; }
+				throw new TypeError( get_assert_prefix() + ' length greater than: ' + util.inspect(value.length) + ' > ' + util.inspect(value2) );
 			} // assert_instanceof
 
 			/** Check `value` with nor-is, meaning it will check that `require('nor-is')[value2](value)` returns true.
@@ -566,7 +613,12 @@ Object.defineProperty(debug, 'assert', {
 				'typeof': assert_typeof,
 				'typeOf': assert_typeof,
 				'equals': assert_equals,
+				'range': assert_range,
 				'length': assert_length,
+				'minLength': assert_min_length,
+				'maxLength': assert_max_length,
+				'prop': assert_property,
+				'property': assert_property,
 				'is': assert_is,
 				'pattern': assert_pattern
 			};
