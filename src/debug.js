@@ -1,4 +1,9 @@
-/* Helpers for debuging */
+/** Helpers for JavaScript debuging
+ * Copyright (c) 2013-2014 Sendanor <info@sendanor.fi>
+ * Copyright (c) 2013-2014 Jaakko-Heikki Heusala <jheusala@iki.fi>
+ *
+ * @FIXME: The ARRAY()'s should be converted to for-loops, etc to improve performance.
+ */
 
 var ENV = (process && process.env) || {};
 var DEBUG_LINE_LIMIT = parseInt(ENV.DEBUG_LINE_LIMIT || 500, 10);
@@ -9,6 +14,7 @@ var util = require("util");
 var FS = require("fs");
 var PATH = require("path");
 var is = require("nor-is");
+var ARRAY = require("nor-array");
 
 var node_0_11_or_newer = (process.versions && is.string(process.versions.node) && parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
 var disable_util = node_0_11_or_newer;
@@ -68,7 +74,7 @@ debug.setNodeENV = function(value) {
 
 // Compatibility hacks
 if(!features.Object_defineProperty) {
-	Object.defineProperty = function(obj, prop, opts) {
+	Object.defineProperty = function(/*obj, prop, opts*/) {
 		// No-op function
 	};
 }
@@ -168,14 +174,14 @@ function get_timestamp() {
 		return (x.length === 1) ? '0'+x : x;
 	}
 	var n = new Date();
-	return [n.getFullYear(), n.getMonth()+1, n.getDate()].map(dd).join('-') + ' ' + [n.getHours(), n.getMinutes(), n.getSeconds()].map(dd).join(':');
+	return n.getFullYear() + '-' + dd(n.getMonth()+1) + '-' + dd(n.getDate()) + ' ' + dd(n.getHours()) + ':' + dd(n.getMinutes()) + ':' + dd(n.getSeconds());
 }
 
 /** Write debug log message */
 function print_error(line) {
 	try {
 		if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-		
+
 		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 			util.error( 'ERROR: '+ line );
 			return;
@@ -260,6 +266,19 @@ function print_log(line) {
 
 }
 
+function inspect_and_trim(v) {
+	return inspect_values(trim_values(v));
+}
+
+function chop_and_convert(v) {
+	return chop_long_values(DEBUG_LINE_LIMIT)(convert_specials(v));
+}
+
+/** Returns the stack property of `x` if it exists, otherwise `x` itself. */
+function get_stack(x) {
+	return (x && x.stack) ? ''+x.stack : x;
+}
+
 /** Writes debug log messages with timestamp, file locations, and function 
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
  * be passed on to `util.inspect()`. */
@@ -283,7 +302,7 @@ Object.defineProperty(debug, 'log', {
 			if(line) {
 				prefix += ':' + line;
 			}
-	
+
 			func = stack[1].getFunctionName();
 			if(func) {
 				prefix += ' @' + func+'()';
@@ -295,9 +314,9 @@ Object.defineProperty(debug, 'log', {
 			try {
 				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				var args = Array.prototype.slice.call(arguments);
-				var cols = [];
+				//var cols = [];
 				print_log( chop_long_paths(prefix) + ': ');
-				args.map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 					print_log( '> ' + chop_long_paths(line) );
 				});
 			} finally {
@@ -307,8 +326,8 @@ Object.defineProperty(debug, 'log', {
 	}
 });
 
-/** Writes debug log messages with timestamp, file locations, and function 
- * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
+/** Writes debug log messages with timestamp, file locations, and function
+ * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
 Object.defineProperty(debug, 'error', {
 	get: function(){
@@ -325,12 +344,12 @@ Object.defineProperty(debug, 'error', {
 		if(stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
-	
+
 			line = stack[1].getLineNumber();
 			if(line) {
 				prefix += ':' + line;
 			}
-	
+
 			func = stack[1].getFunctionName();
 			if(func) {
 				prefix += ' @' + func+'()';
@@ -338,21 +357,18 @@ Object.defineProperty(debug, 'error', {
 		}
 
 		return function () {
-
 			var args = Array.prototype.slice.call(arguments);
-			var cols = [];
+			//var cols = [];
 			print_error( chop_long_paths(prefix) + ': ' );
-			args.map(function(x) {
-				return (x && x.stack) ? ''+x.stack : x;
-			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_error( '> ' + chop_long_paths(line) );
 			});
 		};
 	}
 });
 
-/** Writes debug log messages with timestamp, file locations, and function 
- * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
+/** Writes debug log messages with timestamp, file locations, and function
+ * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
 Object.defineProperty(debug, 'warn', {
 	get: function(){
@@ -369,12 +385,12 @@ Object.defineProperty(debug, 'warn', {
 		if(stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
-	
+
 			line = stack[1].getLineNumber();
 			if(line) {
 				prefix += ':' + line;
 			}
-	
+
 			func = stack[1].getFunctionName();
 			if(func) {
 				prefix += ' @' + func+'()';
@@ -383,19 +399,17 @@ Object.defineProperty(debug, 'warn', {
 
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
-			var cols = [];
+			//var cols = [];
 			print_warning( chop_long_paths(prefix) + ': ' );
-			args.map(function(x) {
-				return (x && x.stack) ? ''+x.stack : x;
-			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_warning( '> ' + chop_long_paths(line) );
 			});
 		};
 	}
 });
 
-/** Writes debug log messages with timestamp, file locations, and function 
- * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
+/** Writes debug log messages with timestamp, file locations, and function
+ * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
 Object.defineProperty(debug, 'info', {
 	get: function(){
@@ -412,12 +426,12 @@ Object.defineProperty(debug, 'info', {
 		if(stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
-	
+
 			line = stack[1].getLineNumber();
 			if(line) {
 				prefix += ':' + line;
 			}
-	
+
 			func = stack[1].getFunctionName();
 			if(func) {
 				prefix += ' @' + func+'()';
@@ -426,11 +440,9 @@ Object.defineProperty(debug, 'info', {
 
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
-			var cols = [];
+			//var cols = [];
 			print_info( chop_long_paths(prefix) + ': ' );
-			args.map(function(x) {
-				return (x && x.stack) ? ''+x.stack : x;
-			}).map(inspect_values).map(trim_values).join(' ').split("\n").map(chop_long_values(DEBUG_LINE_LIMIT)).map(convert_specials).forEach(function(line) {
+			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_info( '> ' + chop_long_paths(line) );
 			});
 		};
@@ -491,8 +503,8 @@ Object.defineProperty(debug, 'assert', {
 			}
 
 			/** Check that `value` is instance of `Type`
-			 * @todo Implement here improved log message "Argument #NNN passed to 
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 * @todo Implement here improved log message "Argument #NNN passed to
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original
 			 *       function where the assert was used!
 			 */
 			function assert_instanceof(Type) {
@@ -503,8 +515,8 @@ Object.defineProperty(debug, 'assert', {
 
 			/** Check that `value` is type of `type`
 			 * @param type {string} Name of type; string, number, object, ...
-			 * @todo Implement here improved log message "Argument #NNN passed to 
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 * @todo Implement here improved log message "Argument #NNN passed to
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original
 			 *       function where the assert was used!
 			 */
 			function assert_typeof(type) {
@@ -529,8 +541,8 @@ Object.defineProperty(debug, 'assert', {
 
 			/** Check that `value` equals to `value2`
 			 * @param value2 {string} Another value
-			 * @todo Implement here improved log message "Argument #NNN passed to 
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 * @todo Implement here improved log message "Argument #NNN passed to
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original
 			 *       function where the assert was used!
 			 */
 			function assert_equals(value2) {
@@ -542,8 +554,8 @@ Object.defineProperty(debug, 'assert', {
 			/** Check that `value` is between range `min` and `max`
 			 * @param min {string} Optional. Minimum value accepted. Set to `undefined` to accept any value.
 			 * @param max {string} Optional. Maximum value accepted.
-			 * @todo Implement here improved log message "Argument #NNN passed to 
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original 
+			 * @todo Implement here improved log message "Argument #NNN passed to
+			 *       #FUNCTION_NAME is not instance of...", and I mean the original
 			 *       function where the assert was used!
 			 */
 			function assert_range(min, max) {
@@ -642,9 +654,9 @@ debug.inspectMethod = function hijack_method(obj, method) {
 		var x = (debug.inspectMethod._id += 1);
 		var args = Array.prototype.slice.call(arguments);
 		var stack = [].concat(debug.__stack);
-		debug.log('#' + x + ': Call to ' + method + ' (' + args.map(inspect_values).join(', ') + ') ...');
+		debug.log('#' + x + ': Call to ' + method + ' (' + ARRAY(args).map(inspect_values).join(', ') + ') ...');
 		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
-		debug.log('#' + x + ": stack = ", stack.map(function(x) { return print_path(x.getFileName()) + ':' + x.getLineNumber(); }).join(' -> ') );
+		debug.log('#' + x + ": stack = ", ARRAY(stack).map(function(x) { return print_path(x.getFileName()) + ':' + x.getLineNumber(); }).join(' -> ') );
 		var ret = orig.apply(obj, args);
 		debug.log('#' + x + ': returned: ', ret);
 		return ret;
