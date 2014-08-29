@@ -267,7 +267,7 @@ function print_log(line) {
 }
 
 function inspect_and_trim(v) {
-	return inspect_values(trim_values(v));
+	return trim_values(inspect_values(v));
 }
 
 function chop_and_convert(v) {
