@@ -276,7 +276,19 @@ function chop_and_convert(v) {
 
 /** Returns the stack property of `x` if it exists, otherwise `x` itself. */
 function get_stack(x) {
-	return (x && x.stack) ? ''+x.stack : x;
+
+	if(!(x && x.stack)) {
+		return x;
+	}
+
+	var buf = ''+x.stack;
+	var message = buf.split('\n')[0];
+
+	if(message === ''+x) {
+		return ''+x.stack;
+	}
+
+	return '' + x + '\n' + x.stack;
 }
 
 /** Writes debug log messages with timestamp, file locations, and function 
