@@ -191,28 +191,83 @@ function get_timestamp() {
 }
 
 /** Write debug log message */
+function _print_error(line) {
+
+	if( (typeof debug === 'object') && (typeof debug._log_error === 'function') ) {
+		debug._log_error( line );
+		return;
+	}
+
+	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+		util.error( 'ERROR: '+ line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+		console.error( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+		console.log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+		debug._log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+		debug._failover_log( line );
+		return;
+	}
+
+}
+
+/** Write debug log message */
 function print_error(line) {
 	try {
 		if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
-
-		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-			util.error( 'ERROR: '+ line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.error === 'function') ) {
-			console.error( line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-			console.log( line );
-			return;
-		}
-
+		_print_error(line);
 	} finally {
 		if(ansi) { stderr_cursor.reset(); }
 	}
+}
+
+/** Write warning message */
+function _print_warning(line) {
+
+	if( (typeof debug === 'object') && (typeof debug._log_warn === 'function') ) {
+		debug._log_warn( line );
+		return;
+	}
+
+	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+		util.error( 'WARNING: '+ line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+		console.warn( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+		console.log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+		debug._log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+		debug._failover_log( line );
+		return;
+	}
+
 }
 
 /** Write warning message */
@@ -220,24 +275,45 @@ function print_warning(line) {
 	try {
 		if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
 
-		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-			util.error( 'WARNING: '+ line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
-			console.warn( line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-			console.log( line );
-			return;
-		}
-
+		_print_warning(line);
 	} finally {
 		if(ansi) { stderr_cursor.reset(); }
 	}
+}
+
+/** Print informative log messages */
+function _print_info(line) {
+
+	if( (typeof debug === 'object') && (typeof debug._log_info === 'function') ) {
+		debug._log_info( line );
+		return;
+	}
+
+	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+		util.error( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.info === 'function') ) {
+		console.info( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+		console.log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+		debug._log( line );
+		return;
+	}
+
+	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+		debug._failover_log( line );
+		return;
+	}
+
 }
 
 /** Print informative log messages */
@@ -245,27 +321,19 @@ function print_info(line) {
 	try {
 		if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
 
-		if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
-			util.error( line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.info === 'function') ) {
-			console.info( line );
-			return;
-		}
-
-		if( (typeof console === 'object') && (typeof console.log === 'function') ) {
-			console.log( line );
-			return;
-		}
+		_print_info(line);
 	} finally {
 		if(ansi) { stderr_cursor.reset(); }
 	}
 }
 
 /** */
-function print_log(line) {
+function _print_log(line) {
+
+	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+		debug._log( line );
+		return;
+	}
 
 	if( (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
 		util.debug( line );
@@ -277,12 +345,19 @@ function print_log(line) {
 		return;
 	}
 
+	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+		debug._failover_log( line );
+		return;
+	}
+
 }
 
+/** */
 function inspect_and_trim(v) {
 	return trim_values(inspect_values(v));
 }
 
+/** */
 function chop_and_convert(v) {
 	return chop_long_values(DEBUG_LINE_LIMIT)(convert_specials(v));
 }
@@ -302,6 +377,15 @@ function get_stack(x) {
 	}
 
 	return '' + x + '\n' + x.stack;
+}
+
+/** */
+function failover_logger(fun) {
+	function logger() {
+		var args = Array.prototype.slice.call(arguments);
+		return fun( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ') );
+	}
+	return logger;
 }
 
 /** Writes debug log messages with timestamp, file locations, and function 
@@ -340,16 +424,16 @@ setup_property(debug, 'log', {
 				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				var args = Array.prototype.slice.call(arguments);
 				//var cols = [];
-				print_log( chop_long_paths(prefix) + ': ');
+				_print_log( chop_long_paths(prefix) + ': ');
 				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
-					print_log( '> ' + chop_long_paths(line) );
+					_print_log( '> ' + chop_long_paths(line) );
 				});
 			} finally {
 				if(ansi) { stdout_cursor.reset(); }
 			}
 		};
 	}
-}, do_nothing);
+}, failover_logger(_print_log) );
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
@@ -390,7 +474,7 @@ setup_property(debug, 'error', {
 			});
 		};
 	}
-}, do_nothing);
+}, failover_logger(_print_error) );
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
@@ -431,7 +515,7 @@ setup_property(debug, 'warn', {
 			});
 		};
 	}
-}, do_nothing);
+}, failover_logger(_print_warning) );
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
@@ -472,7 +556,7 @@ setup_property(debug, 'info', {
 			});
 		};
 	}
-}, do_nothing);
+}, failover_logger(_print_info) );
 
 /* Helper to get function name */
 function get_function_name(fun) {
