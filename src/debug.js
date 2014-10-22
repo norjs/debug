@@ -72,14 +72,27 @@ debug.setNodeENV = function(value) {
 	return NODE_ENV;
 };
 
-// Compatibility hacks
-if(!features.Object_defineProperty) {
-	Object.defineProperty = function(/*obj, prop, opts*/) {
-		// No-op function
-	};
+/* Compatibility hacks */
+function _setup_property(obj, prop, opts) {
+	if(!features.Object_defineProperty) {
+		return;
+	}
+	Object.defineProperty(obj, prop, opts);
 }
 
-Object.defineProperty(debug, '__stack', {
+/** For optimal (v8) JIT compilation we use try-catch in own block.
+ * Try-catch is also required for feature testing of imcompatible Object.defineProperty() (IE8).
+ */
+function setup_property(obj, prop, opts, failsafe) {
+	try {
+		_setup_property(obj, prop, opts);
+	} catch (err) {
+		obj[prop] = failsafe;
+	}
+}
+
+/** Setup `debig.__stack` */
+setup_property(debug, '__stack', {
 	get: function stack_getter(){
 
 		if(!features.Error_captureStackTrace) {
@@ -98,9 +111,9 @@ Object.defineProperty(debug, '__stack', {
 		}
 		return stack;
 	}
-});
+}, []);
 
-Object.defineProperty(debug, '__line', {
+setup_property(debug, '__line', {
 	get: function(){
 		var stack = debug.__stack;
 		var tmp = stack[1];
@@ -109,7 +122,7 @@ Object.defineProperty(debug, '__line', {
 		}
 		return tmp.getLineNumber();
 	}
-});
+}, -1);
 
 /** Returns true if the app is running in production mode */
 debug.isProduction = function () {
@@ -294,7 +307,7 @@ function get_stack(x) {
 /** Writes debug log messages with timestamp, file locations, and function 
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will 
  * be passed on to `util.inspect()`. */
-Object.defineProperty(debug, 'log', {
+setup_property(debug, 'log', {
 	get: function(){
 
 		// Disable in production
@@ -336,12 +349,12 @@ Object.defineProperty(debug, 'log', {
 			}
 		};
 	}
-});
+}, do_nothing);
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
-Object.defineProperty(debug, 'error', {
+setup_property(debug, 'error', {
 	get: function(){
 
 		// Disable in production
@@ -377,12 +390,12 @@ Object.defineProperty(debug, 'error', {
 			});
 		};
 	}
-});
+}, do_nothing);
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
-Object.defineProperty(debug, 'warn', {
+setup_property(debug, 'warn', {
 	get: function(){
 
 		// Disable in production
@@ -418,12 +431,12 @@ Object.defineProperty(debug, 'warn', {
 			});
 		};
 	}
-});
+}, do_nothing);
 
 /** Writes debug log messages with timestamp, file locations, and function
  * names. The usage is `debug.log('foo =', foo);`. Any non-string variable will
  * be passed on to `util.inspect()`. */
-Object.defineProperty(debug, 'info', {
+setup_property(debug, 'info', {
 	get: function(){
 
 		// Disable in production
@@ -459,7 +472,7 @@ Object.defineProperty(debug, 'info', {
 			});
 		};
 	}
-});
+}, do_nothing);
 
 /* Helper to get function name */
 function get_function_name(fun) {
@@ -498,7 +511,7 @@ function get_assert_prefix() {
 
 /** Assert some things about a variable, otherwise throws an exception.
  */
-Object.defineProperty(debug, 'assert', {
+setup_property(debug, 'assert', {
 	get: function assert_getter(){
 
 		/**  */
@@ -652,6 +665,27 @@ Object.defineProperty(debug, 'assert', {
 
 		return assert;
 	} // assert_getter
+}, function dummy_assert() {
+	function pass_self() {
+		return this;
+	}
+	var obj = {
+		'ignore': pass_self,
+		'instanceof': pass_self,
+		'instanceOf': pass_self,
+		'typeof': pass_self,
+		'typeOf': pass_self,
+		'equals': pass_self,
+		'range': pass_self,
+		'length': pass_self,
+		'minLength': pass_self,
+		'maxLength': pass_self,
+		'prop': dummy_assert,
+		'property': dummy_assert,
+		'is': pass_self,
+		'pattern': pass_self
+	};
+	return obj;
 }); // debug.assert
 
 /** Hijacks 3rd party method call to print debug information when it is called.
