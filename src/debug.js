@@ -5,9 +5,8 @@
  * @FIXME: The ARRAY()'s should be converted to for-loops, etc to improve performance.
  */
 
-var ENV = (process && process.env) || {};
-var DEBUG_LINE_LIMIT = parseInt(ENV.DEBUG_LINE_LIMIT || 500, 10);
-var NODE_ENV = ENV.NODE_ENV || 'development';
+var DEBUG_LINE_LIMIT = parseInt(process.env.DEBUG_LINE_LIMIT || 500, 10);
+var NODE_ENV = process.env.NODE_ENV || 'development';
 
 var debug = module.exports = {};
 var util = require("util");
@@ -20,10 +19,15 @@ var node_0_11_or_newer = (process.versions && is.string(process.versions.node) &
 var disable_util = node_0_11_or_newer;
 
 var ansi, stdout_cursor, stderr_cursor;
+// FIXME: `process.browser` does not seem to work on newer browserify
 if(!process.browser) {
 	ansi = require('ansi');
-	stdout_cursor = ansi(process.stdout, {enabled:true});
-	stderr_cursor = ansi(process.stderr, {enabled:true});
+	if(ansi && (typeof ansi === 'function')) {
+		stdout_cursor = ansi(process.stdout, {enabled:true});
+		stderr_cursor = ansi(process.stderr, {enabled:true});
+	} else {
+		ansi = undefined;
+	}
 }
 
 /* Defaults */
