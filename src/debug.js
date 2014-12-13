@@ -76,6 +76,30 @@ debug.setNodeENV = function(value) {
 	return NODE_ENV;
 };
 
+/** Set a prefix
+ * @param value {String|Function} The prefix as a string or a function to build it. The function will get the default prefix as first argument.
+ */
+debug.setPrefix = function(value) {
+	if(!is.func(value)) {
+		debug.assert(value).is('string');
+	}
+	debug.defaults.prefix = value;
+	return debug.defaults.prefix;
+};
+
+/** Get prefix */
+function get_prefix(value) {
+	var has_prefix = debug.defaults.hasOwnProperty('prefix');
+	if(!has_prefix) {
+		return value;
+	}
+	var prefix = has_prefix ? debug.defaults.prefix : '';
+	if(is.func(prefix)) {
+		return prefix(value);
+	}
+	return ''+ value + ' ' + prefix;
+}
+
 /* Compatibility hacks */
 function _setup_property(obj, prop, opts) {
 	if(!features.Object_defineProperty) {
@@ -428,7 +452,7 @@ setup_property(debug, 'log', {
 				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				var args = Array.prototype.slice.call(arguments);
 				//var cols = [];
-				_print_log( chop_long_paths(prefix) + ': ');
+				_print_log( chop_long_paths(get_prefix(prefix)) + ': ');
 				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 					_print_log( '> ' + chop_long_paths(line) );
 				});
@@ -472,7 +496,7 @@ setup_property(debug, 'error', {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			//var cols = [];
-			print_error( chop_long_paths(prefix) + ': ' );
+			print_error( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_error( '> ' + chop_long_paths(line) );
 			});
@@ -513,7 +537,7 @@ setup_property(debug, 'warn', {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			//var cols = [];
-			print_warning( chop_long_paths(prefix) + ': ' );
+			print_warning( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_warning( '> ' + chop_long_paths(line) );
 			});
@@ -554,7 +578,7 @@ setup_property(debug, 'info', {
 		return function () {
 			var args = Array.prototype.slice.call(arguments);
 			//var cols = [];
-			print_info( chop_long_paths(prefix) + ': ' );
+			print_info( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_info( '> ' + chop_long_paths(line) );
 			});
