@@ -8,12 +8,16 @@
 var DEBUG_LINE_LIMIT = parseInt(process.env.DEBUG_LINE_LIMIT || 500, 10);
 var NODE_ENV = process.env.NODE_ENV || 'development';
 
-var debug = module.exports = {};
+var debug = module.exports = require('./core.js');
+
 var util = require("util");
 var FS = require("fs");
 var PATH = require("path");
 var is = require("nor-is");
 var ARRAY = require("nor-array");
+var FUNCTION = require("nor-function");
+var NorAssert = require('./NorAssert.js');
+var DummyAssert = require('./DummyAssert.js');
 
 var node_0_11_or_newer = (process.versions && is.string(process.versions.node) && parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
 var disable_util = node_0_11_or_newer;
@@ -55,15 +59,9 @@ if(typeof Object.defineProperty === 'function') {
 }
 
 /* Pretty print paths */
-function print_path(path) {
-	if(debug.defaults.project_root === undefined) {
-		return path;
-	}
-	return PATH.relative(debug.defaults.project_root, path);
-}
+var print_path = require('./print-path.js');
 
 /* */
-
 debug.setProjectRoot = function(value) {
 	debug.assert(value).is('string');
 	debug.defaults.project_root = value;
@@ -586,219 +584,20 @@ setup_property(debug, 'info', {
 	}
 }, failover_logger(_print_info) );
 
-/* Helper to get function name */
-function get_function_name(fun) {
-	var ret = ''+fun;
-	var len = 'function '.length;
-	if(ret.substr(0, len) === 'function ') {
-		ret = ret.substr(len);
-		ret = ret.substr(0, ret.indexOf('('));
-	} else {
-		ret = util.inspect(fun);
-	}
-	return ret;
+function debug_assert(value) {
+	return new NorAssert(value);
+} // debug_assert
+
+function dummy_assert() {
+	return new DummyAssert();
 }
 
-/** Returns prefix for assert messages */
-function get_assert_prefix() {
-	var stack = debug.__stack;
-	var file, line, func;
+function assert_getter(){
+	return debug_assert;
+} // assert_getter
 
-	if(stack && (stack.length >= 3)) {
-		file = print_path(stack[2].getFileName()) || 'unknown';
-		line = stack[2].getLineNumber();
-		func = stack[2].getFunctionName();
-	}
-
-	// Initialize the start of msg
-	var prefix = '';
-	if(func) {
-		prefix += 'Argument passed to ' + func + '()';
-	} else {
-		prefix += 'Assertion failed';
-		prefix += ' (at ' + file + ':' + line +')';
-	}
-	return prefix;
-}
-
-/** Assert some things about a variable, otherwise throws an exception.
- */
-setup_property(debug, 'assert', {
-	get: function assert_getter(){
-
-		/**  */
-		function assert(value) {
-
-			var value_ignored = false;
-
-			/** Ignore tests if `value` is same as `value2` */
-			function assert_ignore(value2) {
-				if(value === value2) {
-					value_ignored = true;
-				}
-				return this;
-			}
-
-			/** Check that `value` is instance of `Type`
-			 * @todo Implement here improved log message "Argument #NNN passed to
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original
-			 *       function where the assert was used!
-			 */
-			function assert_instanceof(Type) {
-				if(value_ignored) { return this; }
-				if(value instanceof Type) { return this; }
-				throw new TypeError( get_assert_prefix() + ' is not instance of ' + get_function_name(Type) + ': ' + util.inspect(value) );
-			} // assert_instanceof
-
-			/** Check that `value` is type of `type`
-			 * @param type {string} Name of type; string, number, object, ...
-			 * @todo Implement here improved log message "Argument #NNN passed to
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original
-			 *       function where the assert was used!
-			 */
-			function assert_typeof(type) {
-				if(value_ignored) { return this; }
-				if(typeof value === ''+type) { return this; }
-				throw new TypeError( get_assert_prefix() + ' is not type of ' + type + ': ' + util.inspect(value) );
-			} // assert_instanceof
-
-			/** Changes the chain to test the property by name `key` from object `value`
-			 * @param value2 {string} Property name
-			 */
-			function assert_property(key) {
-				if(value_ignored) { return this; }
-
-				if(!is.obj(value)) {
-					throw new TypeError( get_assert_prefix() + ' cannot read property ' + util.inspect(key) + ' from non-object ' + util.inspect(value) );
-				}
-
-				return assert(value[key]);
-
-			} // assert_property
-
-			/** Check that `value` equals to `value2`
-			 * @param value2 {string} Another value
-			 * @todo Implement here improved log message "Argument #NNN passed to
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original
-			 *       function where the assert was used!
-			 */
-			function assert_equals(value2) {
-				if(value_ignored) { return this; }
-				if(value === value2) { return this; }
-				throw new TypeError( get_assert_prefix() + ' does not equal: ' + util.inspect(value) + ' !== ' + util.inspect(value2) );
-			} // assert_equals
-
-			/** Check that `value` is between range `min` and `max`
-			 * @param min {string} Optional. Minimum value accepted. Set to `undefined` to accept any value.
-			 * @param max {string} Optional. Maximum value accepted.
-			 * @todo Implement here improved log message "Argument #NNN passed to
-			 *       #FUNCTION_NAME is not instance of...", and I mean the original
-			 *       function where the assert was used!
-			 */
-			function assert_range(min, max) {
-				if(value_ignored) { return this; }
-				var min_accepted = is.defined(min) ? (value >= min) : true;
-				var max_accepted = is.defined(max) ? (value <= max) : true;
-				if( min_accepted && max_accepted ) { return this; }
-				throw new TypeError( get_assert_prefix() + ' value ' + util.inspect(value) + ' not in range ' + util.inspect(min) + ' .. ' + util.inspect(max) );
-			} // assert_range
-
-			/** Check that length of `value.length` equals to `value2`
-			 * @param value2 {number} Length
-			 */
-			function assert_length(value2) {
-				if(value_ignored) { return this; }
-				if(value.length === value2) { return this; }
-				throw new TypeError( get_assert_prefix() + ' length does not equal: ' + util.inspect(value.length) + ' !== ' + util.inspect(value2) );
-			} // assert_length
-
-			/** Check that length of `value.length` is equal or greater than `value2`
-			 * @param value2 {number} Length
-			 */
-			function assert_min_length(value2) {
-				if(value_ignored) { return this; }
-				if(value.length >= value2) { return this; }
-				throw new TypeError( get_assert_prefix() + ' length less than: ' + util.inspect(value.length) + ' < ' + util.inspect(value2) );
-			} // assert_instanceof
-
-			/** Check that length of `value.length` is equal or less than `value2`
-			 * @param value2 {number} Length
-			 */
-			function assert_max_length(value2) {
-				if(value_ignored) { return this; }
-				if(value.length <= value2) { return this; }
-				throw new TypeError( get_assert_prefix() + ' length greater than: ' + util.inspect(value.length) + ' > ' + util.inspect(value2) );
-			} // assert_instanceof
-
-			/** Check `value` with nor-is, meaning it will check that `require('nor-is')[value2](value)` returns true.
-			 * @param value2 {mixed} Any value type, passed to nor-is function.
-			 */
-			function assert_is(value2) {
-				if(value_ignored) { return this; }
-				if(typeof is[value2] !== 'function') {
-					throw new TypeError( get_assert_prefix() + ' has no support for checking ' + value2 );
-				}
-				if(is[value2](value)) { return this; }
-				throw new TypeError( get_assert_prefix() + ' is not ' + value2 + ': ' + util.inspect(value) );
-			} // assert_instanceof
-
-			/** Check `value` matches pattern `value2`.
-			 * @param value2 {RegExp} The pattern as `RegExp` object
-			 */
-			function assert_pattern(value2) {
-				if(value_ignored) { return this; }
-				if(!is.objOf(value2, RegExp)) {
-					throw new TypeError( get_assert_prefix() + ' has no support for other than RegExp: ' + util.inspect(value2) );
-				}
-				if(value2.test(value)) { return this; }
-				throw new TypeError( get_assert_prefix() + ' does not match ' + value2 + ': ' + util.inspect(value) );
-			} // assert_instanceof
-
-			/** The object that's returned */
-			var obj = {
-				'ignore': assert_ignore,
-				'instanceof': assert_instanceof,
-				'instanceOf': assert_instanceof,
-				'typeof': assert_typeof,
-				'typeOf': assert_typeof,
-				'equals': assert_equals,
-				'range': assert_range,
-				'length': assert_length,
-				'minLength': assert_min_length,
-				'maxLength': assert_max_length,
-				'prop': assert_property,
-				'property': assert_property,
-				'is': assert_is,
-				'pattern': assert_pattern
-			};
-
-			return obj;
-		} // assert
-
-		return assert;
-	} // assert_getter
-}, function dummy_assert() {
-	function pass_self() {
-		return this;
-	}
-	var obj = {
-		'ignore': pass_self,
-		'instanceof': pass_self,
-		'instanceOf': pass_self,
-		'typeof': pass_self,
-		'typeOf': pass_self,
-		'equals': pass_self,
-		'range': pass_self,
-		'length': pass_self,
-		'minLength': pass_self,
-		'maxLength': pass_self,
-		'prop': dummy_assert,
-		'property': dummy_assert,
-		'is': pass_self,
-		'pattern': pass_self
-	};
-	return obj;
-}); // debug.assert
+/** Assert some things about a variable, otherwise throws an exception. */
+setup_property(debug, 'assert', { get: assert_getter }, dummy_assert); // debug.assert
 
 /** Hijacks 3rd party method call to print debug information when it is called.
  * Use it like `debug.inspectMethod(res, 'write');` to hijack `res.write()`.
@@ -815,7 +614,7 @@ debug.inspectMethod = function hijack_method(obj, method) {
 		debug.log('#' + x + ': Call to ' + method + ' (' + ARRAY(args).map(inspect_values).join(', ') + ') ...');
 		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
 		debug.log('#' + x + ": stack = ", ARRAY(stack).map(function(x) { return print_path(x.getFileName()) + ':' + x.getLineNumber(); }).join(' -> ') );
-		var ret = orig.apply(obj, args);
+		var ret = FUNCTION(orig).apply(obj, args);
 		debug.log('#' + x + ': returned: ', ret);
 		return ret;
 	};
@@ -854,7 +653,7 @@ debug.obsoleteMethod = function(self, obsolete_func, func) {
 		var args = Array.prototype.slice.call(arguments);
 		var stack = [].concat(debug.__stack);
 		debug.log('Warning! An obsolete method .'+ obsolete_func + '() used at ' + get_location(stack[1]) + ' -- use .' + func + '() instead.' );
-		return self[func].apply(this, args);
+		return FUNCTION(self[func]).apply(this, args);
 	};
 };
 
