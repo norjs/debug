@@ -57,6 +57,8 @@ debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow()
 debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
 debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
 
+debug.defaults.use_util_error = parse_env_boolean(process.env.DEBUG_USE_UTIL_ERROR, true);
+debug.defaults.use_util_debug = parse_env_boolean(process.env.DEBUG_USE_UTIL_DEBUG, true);
 debug.defaults.use_console_log = parse_env_boolean(process.env.DEBUG_USE_CONSOLE_LOG, true);
 debug.defaults.use_console_info = parse_env_boolean(process.env.DEBUG_USE_CONSOLE_INFO, debug.defaults.use_console_log);
 
@@ -240,7 +242,7 @@ function _print_error(line) {
 		return;
 	}
 
-	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( 'ERROR: '+ line );
 		return;
 	}
@@ -285,7 +287,7 @@ function _print_warning(line) {
 		return;
 	}
 
-	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( 'WARNING: '+ line );
 		return;
 	}
@@ -331,7 +333,7 @@ function _print_info(line) {
 		return;
 	}
 
-	if( (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( line );
 		return;
 	}
@@ -343,6 +345,16 @@ function _print_info(line) {
 
 	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+		console.warn( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+		console.error( line );
 		return;
 	}
 
@@ -377,13 +389,23 @@ function _print_log(line) {
 		return;
 	}
 
-	if( (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
+	if( debug.defaults.use_util_debug && (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
 		util.debug( line );
 		return;
 	}
 
 	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+		console.warn( line );
+		return;
+	}
+
+	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+		console.error( line );
 		return;
 	}
 
