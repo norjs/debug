@@ -34,6 +34,19 @@ if(!process.browser) {
 	}
 }
 
+/** Returns `true` if value is true value, otherwise `false` */
+function parse_env_boolean(value, def) {
+	if( (arguments.length === 2) && (value === undefined) ) { return def; }
+	if(!value) { return false; }
+	if(value === true) { return true; }
+	value = ('' + value).toLowerCase();
+	if(value === "false") { return false; }
+	if(value === "off") { return false; }
+	if(value === "no") { return false; }
+	if(value === "0") { return false; }
+	return true;
+}
+
 /* Defaults */
 debug.defaults = {};
 
@@ -43,6 +56,9 @@ debug.defaults.cursors.error = function(cursor) { return cursor.brightRed(); };
 debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow(); };
 debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
 debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
+
+debug.defaults.use_console_log = parse_env_boolean(process.env.DEBUG_USE_CONSOLE_LOG, true);
+debug.defaults.use_console_info = parse_env_boolean(process.env.DEBUG_USE_CONSOLE_INFO, debug.defaults.use_console_log);
 
 /* Features */
 
@@ -234,7 +250,7 @@ function _print_error(line) {
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
@@ -279,7 +295,7 @@ function _print_warning(line) {
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
@@ -320,12 +336,12 @@ function _print_info(line) {
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.info === 'function') ) {
+	if( debug.defaults.use_console_info && (typeof console === 'object') && (typeof console.info === 'function') ) {
 		console.info( line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
@@ -366,7 +382,7 @@ function _print_log(line) {
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
