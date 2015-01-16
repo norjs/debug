@@ -39,12 +39,13 @@ function parse_env_boolean(value, def) {
 	if( (arguments.length === 2) && (value === undefined) ) { return def; }
 	if(!value) { return false; }
 	if(value === true) { return true; }
-	value = ('' + value).toLowerCase();
-	if(value === "false") { return false; }
-	if(value === "off") { return false; }
-	if(value === "no") { return false; }
-	if(value === "0") { return false; }
-	return true;
+	value = ('' + value).toLowerCase().trim();
+	if(value === "true") { return true; }
+	if(value === "on") { return true; }
+	if(value === "yes") { return true; }
+	if(value === "y") { return true; }
+	if(value === "1") { return true; }
+	return false;
 }
 
 /* Defaults */
@@ -57,6 +58,7 @@ debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow()
 debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
 debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
 
+debug.defaults.production_enable_log = parse_env_boolean(process.env.DEBUG_ENABLE_LOG_IN_PRODUCTION, false);
 debug.defaults.use_util_error = parse_env_boolean(process.env.DEBUG_USE_UTIL_ERROR, true);
 debug.defaults.use_util_debug = parse_env_boolean(process.env.DEBUG_USE_UTIL_DEBUG, true);
 debug.defaults.use_console_log = parse_env_boolean(process.env.DEBUG_USE_CONSOLE_LOG, true);
@@ -459,7 +461,7 @@ setup_property(debug, 'log', {
 	get: function(){
 
 		// Disable in production
-		if(debug.isProduction()) {
+		if( (!debug.defaults.production_enable_log) && debug.isProduction()) {
 			return do_nothing;
 		}
 
