@@ -1,6 +1,6 @@
 {
   "name": "nor-debug",
-  "version": "0.1.52",
+  "version": "0.1.53",
   "description": "Debug helpers for Node.js apps",
   "main": "src/debug.js",
   "scripts": {

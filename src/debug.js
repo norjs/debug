@@ -438,11 +438,17 @@ function get_stack(x) {
 	var buf = ''+x.stack;
 	var message = buf.split('\n')[0];
 
+	var extra = Object.keys(x).filter(function(key) {
+		return (key !== 'stack') && (x[key] !== undefined);
+	}).map(function(key) {
+		return '> ' + key + ' = ' + inspect_and_trim(x[key]);
+	}).join('\n');
+
 	if(message === ''+x) {
-		return ''+x.stack;
+		return ''+x.stack + '\n' + extra;
 	}
 
-	return '' + x + '\n' + x.stack;
+	return '' + x + '\n' + x.stack + '\n' + extra;
 }
 
 /** */
