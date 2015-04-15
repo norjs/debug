@@ -42,3 +42,8 @@ Write debug log messages
 You may use `debug.log(msg, [msg2...])` to write debug messages. This function 
 will only write log if the app is running in development mode. All non-string 
 arguments will be converted to string with `util.inspect()`.
+
+Commercial Support
+------------------
+
+You can buy commercial support from [Sendanor](http://sendanor.com/software).
