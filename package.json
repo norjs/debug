@@ -1,6 +1,6 @@
 {
   "name": "nor-debug",
-  "version": "0.1.54",
+  "version": "0.1.55",
   "description": "Debug helpers for Node.js apps",
   "main": "src/debug.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "debug", "assert"
   ],
   "dependencies": {
-    "nor-is"    : ">= 0.1.17 < 0.2.0",
+    "nor-is"    : ">= 0.1.18 < 0.2.0",
     "nor-array" : ">= 0.1.8  < 0.2.0",
     "nor-function" : ">= 0.1.7  < 0.2.0",
     "ansi"      : ">= 0.2.1  < 0.3.0"
