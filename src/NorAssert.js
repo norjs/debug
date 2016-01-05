@@ -166,6 +166,18 @@ NorAssert.prototype.is = function assert_is(value2) {
 	throw new TypeError( get_assert_prefix() + ' is not ' + value2 + ': ' + util.inspect(this.value) );
 }; // assert_is
 
+/** Check `this.value` with nor-is, meaning it will check that `require('nor-is')[value2](this.value)` returns not true.
+ * @param value2 {mixed} Any this.value type, passed to nor-is function.
+ */
+NorAssert.prototype.not = function assert_is(value2) {
+	if(this.value_ignored) { return this; }
+	if(typeof is[value2] !== 'function') {
+		throw new TypeError( get_assert_prefix() + ' has no support for checking ' + value2 );
+	}
+	if(!is[value2](this.value)) { return this; }
+	throw new TypeError( get_assert_prefix() + ' is ' + value2 + ': ' + util.inspect(this.value) );
+}; // assert_is
+
 /** Check `this.value` matches pattern `value2`.
  * @param value2 {RegExp} The pattern as `RegExp` object
  */
