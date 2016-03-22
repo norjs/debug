@@ -22,18 +22,6 @@ var DummyAssert = require('./DummyAssert.js');
 var node_0_11_or_newer = (process.versions && is.string(process.versions.node) && parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
 var disable_util = node_0_11_or_newer;
 
-var ansi, stdout_cursor, stderr_cursor;
-// FIXME: `process.browser` does not seem to work on newer browserify
-if(!process.browser) {
-	ansi = require('ansi');
-	if(ansi && (typeof ansi === 'function')) {
-		stdout_cursor = ansi(process.stdout, {enabled:true});
-		stderr_cursor = ansi(process.stderr, {enabled:true});
-	} else {
-		ansi = undefined;
-	}
-}
-
 /** Returns `true` if value is true value, otherwise `false` */
 function parse_env_boolean(value, def) {
 	if( (arguments.length === 2) && (value === undefined) ) { return def; }
@@ -46,6 +34,19 @@ function parse_env_boolean(value, def) {
 	if(value === "y") { return true; }
 	if(value === "1") { return true; }
 	return false;
+}
+
+var DEGUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
+var ansi, stdout_cursor, stderr_cursor;
+// FIXME: `process.browser` does not seem to work on newer browserify
+if( (!process.browser) && (DEGUG_ENABLE_COLORS) ) {
+	ansi = require('ansi');
+	if(ansi && (typeof ansi === 'function')) {
+		stdout_cursor = ansi(process.stdout, {enabled:true});
+		stderr_cursor = ansi(process.stderr, {enabled:true});
+	} else {
+		ansi = undefined;
+	}
 }
 
 /* Defaults */
@@ -472,7 +473,8 @@ setup_property(debug, 'log', {
 		}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp();
+		var timestamp = get_timestamp();
+		var prefix = timestamp;
 		var line, func;
 
 		if( stack && (stack.length >= 2) ) {
@@ -495,10 +497,9 @@ setup_property(debug, 'log', {
 			try {
 				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				var args = Array.prototype.slice.call(arguments);
-				//var cols = [];
 				_print_log( chop_long_paths(get_prefix(prefix)) + ': ');
 				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
-					_print_log( '> ' + chop_long_paths(line) );
+					_print_log( ''+ timestamp + ' > ' + chop_long_paths(line) );
 				});
 			} finally {
 				if(ansi) { stdout_cursor.reset(); }
@@ -519,7 +520,8 @@ setup_property(debug, 'error', {
 		//}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp();
+		var timestamp = get_timestamp();
+		var prefix = timestamp;
 		var line, func;
 
 		if(stack && (stack.length >= 2)) {
@@ -542,7 +544,7 @@ setup_property(debug, 'error', {
 			//var cols = [];
 			print_error( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
-				print_error( '> ' + chop_long_paths(line) );
+				print_error( ''+timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
 	}
@@ -560,7 +562,8 @@ setup_property(debug, 'warn', {
 		//}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp();
+		var timestamp = get_timestamp();
+		var prefix = timestamp;
 		var line, func;
 
 		if(stack && (stack.length >= 2)) {
@@ -583,7 +586,7 @@ setup_property(debug, 'warn', {
 			//var cols = [];
 			print_warning( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
-				print_warning( '> ' + chop_long_paths(line) );
+				print_warning( ''+timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
 	}
@@ -601,7 +604,8 @@ setup_property(debug, 'info', {
 		//}
 
 		var stack = debug.__stack;
-		var prefix = get_timestamp();
+		var timestamp = get_timestamp();
+		var prefix = timestamp;
 		var line, func;
 
 		if(stack && (stack.length >= 2)) {
@@ -624,7 +628,7 @@ setup_property(debug, 'info', {
 			//var cols = [];
 			print_info( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
-				print_info( '> ' + chop_long_paths(line) );
+				print_info( ''+ timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
 	}
