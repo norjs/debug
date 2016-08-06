@@ -19,7 +19,9 @@ var FUNCTION = require("nor-function");
 var NorAssert = require('./NorAssert.js');
 var DummyAssert = require('./DummyAssert.js');
 
-var node_0_11_or_newer = (process.versions && is.string(process.versions.node) && parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
+var node_0_11_or_newer = (process.versions &&
+	is.string(process.versions.node) &&
+	parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
 var disable_util = node_0_11_or_newer;
 
 /** Returns `true` if value is true value, otherwise `false` */
