@@ -38,10 +38,10 @@ function parse_env_boolean(value, def) {
 	return false;
 }
 
-var DEGUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
+var DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
 var ansi, stdout_cursor, stderr_cursor;
 // FIXME: `process.browser` does not seem to work on newer browserify
-if( (!process.browser) && (DEGUG_ENABLE_COLORS) ) {
+if( (!process.browser) && (DEBUG_ENABLE_COLORS) ) {
 	ansi = require('ansi');
 	if(ansi && (typeof ansi === 'function')) {
 		stdout_cursor = ansi(process.stdout, {enabled:true});
