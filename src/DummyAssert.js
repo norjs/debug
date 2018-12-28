@@ -4,24 +4,22 @@
  *
  */
 
-"use strict";
-
-var NorAssert = require('./NorAssert.js');
+import NorAssert from './NorAssert.js';
 
 /** DummyAssert */
-function DummyAssert() {
-}
+export default class DummyAssert {
 
-/** */
-DummyAssert.prototype.pass_self = function pass_self() {
-	return this;
-};
+	/** DummyAssert */
+	constructor () {
+	}
+
+	/** */
+	pass_self () {
+		return this;
+	}
+
+}
 
 Object.keys(NorAssert.prototype).forEach(function(key) {
 	DummyAssert.prototype[key] = DummyAssert.prototype.pass_self;
 });
-
-/** Exports */
-module.exports = DummyAssert;
-
-/* EOF */

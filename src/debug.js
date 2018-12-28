@@ -16,8 +16,8 @@ let PATH = require("path");
 let is = require("nor-is");
 let ARRAY = require("nor-array");
 let FUNCTION = require("nor-function");
-let NorAssert = require('./NorAssert.js');
-let DummyAssert = require('./DummyAssert.js');
+import NorAssert from './NorAssert.js';
+import DummyAssert from './DummyAssert.js';
 
 let node_0_11_or_newer = (process.versions &&
 	is.string(process.versions.node) &&
@@ -52,29 +52,25 @@ function parse_env_boolean (value, def = PRIVATE.UNDEFINED) {
 	}
 }
 
-let DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
-let ansi, stdout_cursor, stderr_cursor;
+const DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
+const ansi = (!process.browser) && (DEBUG_ENABLE_COLORS) ? require('./ansi.js').create : undefined;
+let stdout_cursor, stderr_cursor;
 
 // FIXME: `process.browser` does not seem to work on newer browserify
-if ( (!process.browser) && (DEBUG_ENABLE_COLORS) ) {
-	ansi = require('ansi');
-	if (ansi && (typeof ansi === 'function')) {
-		stdout_cursor = ansi(process.stdout, {enabled:true});
-		stderr_cursor = ansi(process.stderr, {enabled:true});
-	} else {
-		ansi = undefined;
-	}
+if (ansi) {
+	stdout_cursor = ansi(process.stdout);
+	stderr_cursor = ansi(process.stderr);
 }
 
 /* Defaults */
 debug.defaults = {};
 
-debug.defaults.cursors = {};
-
-debug.defaults.cursors.error = function(cursor) { return cursor.brightRed(); };
-debug.defaults.cursors.warning = function(cursor) { return cursor.brightYellow(); };
-debug.defaults.cursors.log = function(cursor) { return cursor.magenta(); };
-debug.defaults.cursors.info = function(cursor) { return cursor.green(); };
+debug.defaults.cursors = {
+	error: cursor => cursor.brightRed(),
+	warning: cursor => cursor.brightYellow(),
+	log: cursor => cursor.magenta(),
+	info: cursor => cursor.green()
+};
 
 debug.defaults.production_enable_log = parse_env_boolean(process.env.DEBUG_ENABLE_LOG_IN_PRODUCTION, false);
 debug.defaults.use_util_error = parse_env_boolean(process.env.DEBUG_USE_UTIL_ERROR, true);
