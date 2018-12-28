@@ -1,49 +1,64 @@
 /** Helpers for JavaScript debuging
- * Copyright (c) 2013-2014 Sendanor <info@sendanor.fi>
- * Copyright (c) 2013-2014 Jaakko-Heikki Heusala <jheusala@iki.fi>
+ * Copyright (c) 2013-2019 Sendanor <info@sendanor.fi>
+ * Copyright (c) 2013-2019 Jaakko-Heikki Heusala <jheusala@iki.fi>
  *
  * @FIXME: The ARRAY()'s should be converted to for-loops, etc to improve performance.
  */
 
-var DEBUG_LINE_LIMIT = parseInt(process.env.DEBUG_LINE_LIMIT || 500, 10);
-var NODE_ENV = process.env.NODE_ENV || 'development';
+let DEBUG_LINE_LIMIT = parseInt(process.env.DEBUG_LINE_LIMIT || 500, 10);
+let NODE_ENV = process.env.NODE_ENV || 'development';
 
-var debug = module.exports = require('./core.js');
+let debug = module.exports = require('./core.js');
 
-var util = require("util");
-var FS = require("fs");
-var PATH = require("path");
-var is = require("nor-is");
-var ARRAY = require("nor-array");
-var FUNCTION = require("nor-function");
-var NorAssert = require('./NorAssert.js');
-var DummyAssert = require('./DummyAssert.js');
+let util = require("util");
+let FS = require("fs");
+let PATH = require("path");
+let is = require("nor-is");
+let ARRAY = require("nor-array");
+let FUNCTION = require("nor-function");
+let NorAssert = require('./NorAssert.js');
+let DummyAssert = require('./DummyAssert.js');
 
-var node_0_11_or_newer = (process.versions &&
+let node_0_11_or_newer = (process.versions &&
 	is.string(process.versions.node) &&
 	parseFloat(process.versions.node.split('.').slice(0, 2).join('.')) >= 0.11 ) ? true : false;
-var disable_util = node_0_11_or_newer;
+let disable_util = node_0_11_or_newer;
 
-/** Returns `true` if value is true value, otherwise `false` */
-function parse_env_boolean(value, def) {
-	if( (arguments.length === 2) && (value === undefined) ) { return def; }
-	if(!value) { return false; }
-	if(value === true) { return true; }
-	value = ('' + value).toLowerCase().trim();
-	if(value === "true") { return true; }
-	if(value === "on") { return true; }
-	if(value === "yes") { return true; }
-	if(value === "y") { return true; }
-	if(value === "1") { return true; }
-	return false;
+const PRIVATE = {
+	UNDEFINED: Symbol('undefined')
+};
+
+/** Returns `true` if value is true value, otherwise `false`.
+ *
+ * @param value {*} The value to test for.
+ * @param def {*} Optional default value. If defined, and value was `undefined`, this value will be returned instead.
+ * @return {boolean|*}
+ */
+function parse_env_boolean (value, def = PRIVATE.UNDEFINED) {
+	if ( (def !== PRIVATE.UNDEFINED) && (value === undefined) ) return def;
+	if (!value) return false;
+	if (value === true) return true;
+
+	switch (('' + value).toLowerCase().trim()) {
+	case "true":
+	case "on":
+	case "yes":
+	case "y":
+	case "1":
+		return true;
+
+	default:
+		return false;
+	}
 }
 
-var DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
-var ansi, stdout_cursor, stderr_cursor;
+let DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
+let ansi, stdout_cursor, stderr_cursor;
+
 // FIXME: `process.browser` does not seem to work on newer browserify
-if( (!process.browser) && (DEBUG_ENABLE_COLORS) ) {
+if ( (!process.browser) && (DEBUG_ENABLE_COLORS) ) {
 	ansi = require('ansi');
-	if(ansi && (typeof ansi === 'function')) {
+	if (ansi && (typeof ansi === 'function')) {
 		stdout_cursor = ansi(process.stdout, {enabled:true});
 		stderr_cursor = ansi(process.stderr, {enabled:true});
 	} else {
@@ -69,20 +84,20 @@ debug.defaults.use_console_info = parse_env_boolean(process.env.DEBUG_USE_CONSOL
 
 /* Features */
 
-var features = {};
+let features = {};
 
 // Error.captureStackTrace
-if(typeof Error.captureStackTrace === 'function') {
+if (typeof Error.captureStackTrace === 'function') {
 	features.Error_captureStackTrace = true;
 }
 
 // Object.defineProperty
-if(typeof Object.defineProperty === 'function') {
+if (typeof Object.defineProperty === 'function') {
 	features.Object_defineProperty = true;
 }
 
 /* Pretty print paths */
-var print_path = require('./print-path.js');
+let print_path = require('./print-path.js');
 
 /* */
 debug.setProjectRoot = function(value) {
@@ -101,7 +116,7 @@ debug.setNodeENV = function(value) {
  * @param value {String|Function} The prefix as a string or a function to build it. The function will get the default prefix as first argument.
  */
 debug.setPrefix = function(value) {
-	if(!is.func(value)) {
+	if (!is.func(value)) {
 		debug.assert(value).is('string');
 	}
 	debug.defaults.prefix = value;
@@ -110,12 +125,12 @@ debug.setPrefix = function(value) {
 
 /** Get prefix */
 function get_prefix(value) {
-	var has_prefix = debug.defaults.hasOwnProperty('prefix');
-	if(!has_prefix) {
+	let has_prefix = debug.defaults.hasOwnProperty('prefix');
+	if (!has_prefix) {
 		return value;
 	}
-	var prefix = has_prefix ? debug.defaults.prefix : '';
-	if(is.func(prefix)) {
+	let prefix = has_prefix ? debug.defaults.prefix : '';
+	if (is.func(prefix)) {
 		return prefix(value);
 	}
 	return ''+ value + ' ' + prefix;
@@ -123,7 +138,7 @@ function get_prefix(value) {
 
 /* Compatibility hacks */
 function _setup_property(obj, prop, opts) {
-	if(!features.Object_defineProperty) {
+	if (!features.Object_defineProperty) {
 		return;
 	}
 	Object.defineProperty(obj, prop, opts);
@@ -144,11 +159,11 @@ function setup_property(obj, prop, opts, failsafe) {
 setup_property(debug, '__stack', {
 	get: function stack_getter(){
 
-		if(!features.Error_captureStackTrace) {
+		if (!features.Error_captureStackTrace) {
 			return [];
 		}
 
-		var orig, err, stack;
+		let orig, err, stack;
 		try {
 			orig = Error.prepareStackTrace;
 			Error.prepareStackTrace = function(_, stack){ return stack; };
@@ -164,9 +179,9 @@ setup_property(debug, '__stack', {
 
 setup_property(debug, '__line', {
 	get: function(){
-		var stack = debug.__stack;
-		var tmp = stack[1];
-		if(!(tmp && (typeof tmp.getLineNumber === 'function'))) {
+		let stack = debug.__stack;
+		let tmp = stack[1];
+		if (!(tmp && (typeof tmp.getLineNumber === 'function'))) {
 			return;
 		}
 		return tmp.getLineNumber();
@@ -185,7 +200,7 @@ debug.isDevelopment = function () {
 
 /** Returns value converted to string and trimmed from white spaces around it */
 function inspect_values(x) {
-	if(typeof x === "string") { return x; }
+	if (typeof x === "string") { return x; }
 	return util.inspect(x);
 }
 
@@ -201,12 +216,12 @@ function trim_values(x) {
 
 /** Chop too long values to specified limit */
 function chop_long_values(limit) {
-	if(limit-3 < 1) {
+	if (limit-3 < 1) {
 		throw new TypeError("limit must be at least four (4) characters!");
 	}
 	return function(x) {
 		x = ''+x;
-		if(x.length > limit) {
+		if (x.length > limit) {
 			return x.substr(0, limit-3) + '...';
 		}
 		return x;
@@ -217,7 +232,7 @@ function chop_long_values(limit) {
 function chop_long_paths(str) {
 	str = ''+str;
 	str = str.replace(/(\/[^/:\)\(]+)+/gi, function(path) {
-		if(FS && is.func(FS.existsSync) && FS.existsSync(path)) {
+		if (FS && is.func(FS.existsSync) && FS.existsSync(path)) {
 			return print_path(path);
 		}
 		return path;
@@ -235,39 +250,39 @@ function get_timestamp() {
 		x = ''+x;
 		return (x.length === 1) ? '0'+x : x;
 	}
-	var n = new Date();
+	let n = new Date();
 	return n.getFullYear() + '-' + dd(n.getMonth()+1) + '-' + dd(n.getDate()) + ' ' + dd(n.getHours()) + ':' + dd(n.getMinutes()) + ':' + dd(n.getSeconds());
 }
 
 /** Write debug log message */
 function _print_error(line) {
 
-	if( (typeof debug === 'object') && (typeof debug._log_error === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log_error === 'function') ) {
 		debug._log_error( line );
 		return;
 	}
 
-	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if ( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( 'ERROR: '+ line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.error === 'function') ) {
 		console.error( line );
 		return;
 	}
 
-	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if ( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
 		debug._log( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
 		debug._failover_log( line );
 		return;
 	}
@@ -277,42 +292,42 @@ function _print_error(line) {
 /** Write debug log message */
 function print_error(line) {
 	try {
-		if(ansi) { debug.defaults.cursors.error(stderr_cursor); }
+		if (ansi) { debug.defaults.cursors.error(stderr_cursor); }
 		_print_error(line);
 	} finally {
-		if(ansi) { stderr_cursor.reset(); }
+		if (ansi) { stderr_cursor.reset(); }
 	}
 }
 
 /** Write warning message */
 function _print_warning(line) {
 
-	if( (typeof debug === 'object') && (typeof debug._log_warn === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log_warn === 'function') ) {
 		debug._log_warn( line );
 		return;
 	}
 
-	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if ( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( 'WARNING: '+ line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.warn === 'function') ) {
 		console.warn( line );
 		return;
 	}
 
-	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if ( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
 		debug._log( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
 		debug._failover_log( line );
 		return;
 	}
@@ -322,53 +337,53 @@ function _print_warning(line) {
 /** Write warning message */
 function print_warning(line) {
 	try {
-		if(ansi) { debug.defaults.cursors.warning(stderr_cursor); }
+		if (ansi) { debug.defaults.cursors.warning(stderr_cursor); }
 
 		_print_warning(line);
 	} finally {
-		if(ansi) { stderr_cursor.reset(); }
+		if (ansi) { stderr_cursor.reset(); }
 	}
 }
 
 /** Print informative log messages */
 function _print_info(line) {
 
-	if( (typeof debug === 'object') && (typeof debug._log_info === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log_info === 'function') ) {
 		debug._log_info( line );
 		return;
 	}
 
-	if( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
+	if ( debug.defaults.use_util_error && (!disable_util) && (typeof util === 'object') && (typeof util.error === 'function') ) {
 		util.error( line );
 		return;
 	}
 
-	if( debug.defaults.use_console_info && (typeof console === 'object') && (typeof console.info === 'function') ) {
+	if ( debug.defaults.use_console_info && (typeof console === 'object') && (typeof console.info === 'function') ) {
 		console.info( line );
 		return;
 	}
 
-	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if ( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.warn === 'function') ) {
 		console.warn( line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.error === 'function') ) {
 		console.error( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
 		debug._log( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
 		debug._failover_log( line );
 		return;
 	}
@@ -378,43 +393,43 @@ function _print_info(line) {
 /** Print informative log messages */
 function print_info(line) {
 	try {
-		if(ansi) { debug.defaults.cursors.info(stderr_cursor); }
+		if (ansi) { debug.defaults.cursors.info(stderr_cursor); }
 
 		_print_info(line);
 	} finally {
-		if(ansi) { stderr_cursor.reset(); }
+		if (ansi) { stderr_cursor.reset(); }
 	}
 }
 
 /** */
 function _print_log(line) {
 
-	if( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._log === 'function') ) {
 		debug._log( line );
 		return;
 	}
 
-	if( debug.defaults.use_util_debug && (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
+	if ( debug.defaults.use_util_debug && (!disable_util) && (typeof util === 'object') && (typeof util.debug === 'function') ) {
 		util.debug( line );
 		return;
 	}
 
-	if( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
+	if ( debug.defaults.use_console_log && (typeof console === 'object') && (typeof console.log === 'function') ) {
 		console.log( line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.warn === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.warn === 'function') ) {
 		console.warn( line );
 		return;
 	}
 
-	if( (typeof console === 'object') && (typeof console.error === 'function') ) {
+	if ( (typeof console === 'object') && (typeof console.error === 'function') ) {
 		console.error( line );
 		return;
 	}
 
-	if( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
+	if ( (typeof debug === 'object') && (typeof debug._failover_log === 'function') ) {
 		debug._failover_log( line );
 		return;
 	}
@@ -434,20 +449,20 @@ function chop_and_convert(v) {
 /** Returns the stack property of `x` if it exists, otherwise `x` itself. */
 function get_stack(x) {
 
-	if(!(x && x.stack)) {
+	if (!(x && x.stack)) {
 		return x;
 	}
 
-	var buf = ''+x.stack;
-	var message = buf.split('\n')[0];
+	let buf = ''+x.stack;
+	let message = buf.split('\n')[0];
 
-	var extra = Object.keys(x).filter(function(key) {
+	let extra = Object.keys(x).filter(function(key) {
 		return (key !== 'stack') && (x[key] !== undefined);
 	}).map(function(key) {
 		return '> ' + key + ' = ' + inspect_and_trim(x[key]);
 	}).join('\n');
 
-	if(message === ''+x) {
+	if (message === ''+x) {
 		return ''+x.stack + '\n' + extra;
 	}
 
@@ -457,7 +472,7 @@ function get_stack(x) {
 /** */
 function failover_logger(fun) {
 	function logger() {
-		var args = Array.prototype.slice.call(arguments);
+		let args = Array.prototype.slice.call(arguments);
 		return fun( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ') );
 	}
 	return logger;
@@ -470,26 +485,26 @@ setup_property(debug, 'log', {
 	get: function(){
 
 		// Disable in production
-		if( (!debug.defaults.production_enable_log) && debug.isProduction()) {
+		if ( (!debug.defaults.production_enable_log) && debug.isProduction()) {
 			return do_nothing;
 		}
 
-		var stack = debug.__stack;
-		var timestamp = get_timestamp();
-		var prefix = timestamp;
-		var line, func;
+		let stack = debug.__stack;
+		let timestamp = get_timestamp();
+		let prefix = timestamp;
+		let line, func;
 
-		if( stack && (stack.length >= 2) ) {
+		if ( stack && (stack.length >= 2) ) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 
 			line = stack[1].getLineNumber();
-			if(line) {
+			if (line) {
 				prefix += ':' + line;
 			}
 
 			func = stack[1].getFunctionName();
-			if(func) {
+			if (func) {
 				prefix += ' @' + func+'()';
 			}
 		}
@@ -497,14 +512,14 @@ setup_property(debug, 'log', {
 
 		return function () {
 			try {
-				if(ansi) { debug.defaults.cursors.log(stdout_cursor); }
-				var args = Array.prototype.slice.call(arguments);
+				if (ansi) { debug.defaults.cursors.log(stdout_cursor); }
+				let args = Array.prototype.slice.call(arguments);
 				_print_log( chop_long_paths(get_prefix(prefix)) + ': ');
 				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 					_print_log( ''+ timestamp + ' > ' + chop_long_paths(line) );
 				});
 			} finally {
-				if(ansi) { stdout_cursor.reset(); }
+				if (ansi) { stdout_cursor.reset(); }
 			}
 		};
 	}
@@ -517,33 +532,33 @@ setup_property(debug, 'error', {
 	get: function(){
 
 		// Disable in production
-		//if(debug.isProduction()) {
+		//if (debug.isProduction()) {
 		//	return do_nothing;
 		//}
 
-		var stack = debug.__stack;
-		var timestamp = get_timestamp();
-		var prefix = timestamp;
-		var line, func;
+		let stack = debug.__stack;
+		let timestamp = get_timestamp();
+		let prefix = timestamp;
+		let line, func;
 
-		if(stack && (stack.length >= 2)) {
+		if (stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 
 			line = stack[1].getLineNumber();
-			if(line) {
+			if (line) {
 				prefix += ':' + line;
 			}
 
 			func = stack[1].getFunctionName();
-			if(func) {
+			if (func) {
 				prefix += ' @' + func+'()';
 			}
 		}
 
 		return function () {
-			var args = Array.prototype.slice.call(arguments);
-			//var cols = [];
+			let args = Array.prototype.slice.call(arguments);
+			//let cols = [];
 			print_error( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_error( ''+timestamp + ' > ' + chop_long_paths(line) );
@@ -559,33 +574,33 @@ setup_property(debug, 'warn', {
 	get: function(){
 
 		// Disable in production
-		//if(debug.isProduction()) {
+		//if (debug.isProduction()) {
 		//	return do_nothing;
 		//}
 
-		var stack = debug.__stack;
-		var timestamp = get_timestamp();
-		var prefix = timestamp;
-		var line, func;
+		let stack = debug.__stack;
+		let timestamp = get_timestamp();
+		let prefix = timestamp;
+		let line, func;
 
-		if(stack && (stack.length >= 2)) {
+		if (stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 
 			line = stack[1].getLineNumber();
-			if(line) {
+			if (line) {
 				prefix += ':' + line;
 			}
 
 			func = stack[1].getFunctionName();
-			if(func) {
+			if (func) {
 				prefix += ' @' + func+'()';
 			}
 		}
 
 		return function () {
-			var args = Array.prototype.slice.call(arguments);
-			//var cols = [];
+			let args = Array.prototype.slice.call(arguments);
+			//let cols = [];
 			print_warning( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_warning( ''+timestamp + ' > ' + chop_long_paths(line) );
@@ -601,33 +616,33 @@ setup_property(debug, 'info', {
 	get: function(){
 
 		// Disable in production
-		//if(debug.isProduction()) {
+		//if (debug.isProduction()) {
 		//	return do_nothing;
 		//}
 
-		var stack = debug.__stack;
-		var timestamp = get_timestamp();
-		var prefix = timestamp;
-		var line, func;
+		let stack = debug.__stack;
+		let timestamp = get_timestamp();
+		let prefix = timestamp;
+		let line, func;
 
-		if(stack && (stack.length >= 2)) {
+		if (stack && (stack.length >= 2)) {
 
 			prefix += ' ' + print_path(stack[1].getFileName()) || 'unknown';
 
 			line = stack[1].getLineNumber();
-			if(line) {
+			if (line) {
 				prefix += ':' + line;
 			}
 
 			func = stack[1].getFunctionName();
-			if(func) {
+			if (func) {
 				prefix += ' @' + func+'()';
 			}
 		}
 
 		return function () {
-			var args = Array.prototype.slice.call(arguments);
-			//var cols = [];
+			let args = Array.prototype.slice.call(arguments);
+			//let cols = [];
 			print_info( chop_long_paths(get_prefix(prefix)) + ': ' );
 			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(function(line) {
 				print_info( ''+ timestamp + ' > ' + chop_long_paths(line) );
@@ -655,18 +670,18 @@ setup_property(debug, 'assert', { get: assert_getter }, dummy_assert); // debug.
  * Use it like `debug.inspectMethod(res, 'write');` to hijack `res.write()`.
  */
 debug.inspectMethod = function hijack_method(obj, method) {
-	var orig = obj[method];
-	if(!debug.inspectMethod._id) {
+	let orig = obj[method];
+	if (!debug.inspectMethod._id) {
 		debug.inspectMethod._id = 0;
 	}
 	obj[method] = function() {
-		var x = (debug.inspectMethod._id += 1);
-		var args = Array.prototype.slice.call(arguments);
-		var stack = [].concat(debug.__stack);
+		let x = (debug.inspectMethod._id += 1);
+		let args = Array.prototype.slice.call(arguments);
+		let stack = [].concat(debug.__stack);
 		debug.log('#' + x + ': Call to ' + method + ' (' + ARRAY(args).map(inspect_values).join(', ') + ') ...');
 		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
 		debug.log('#' + x + ": stack = ", ARRAY(stack).map(function(x) { return print_path(x.getFileName()) + ':' + x.getLineNumber(); }).join(' -> ') );
-		var ret = FUNCTION(orig).apply(obj, args);
+		let ret = FUNCTION(orig).apply(obj, args);
 		debug.log('#' + x + ': returned: ', ret);
 		return ret;
 	};
@@ -674,17 +689,17 @@ debug.inspectMethod = function hijack_method(obj, method) {
 
 /** */
 function get_location(x, short) {
-	var file = (x && x.getFileName && print_path(x.getFileName())) || '';
-	var line = (x && x.getLineNumber && x.getLineNumber()) || '';
-	var func = (x && x.getFunctionName && x.getFunctionName()) || '';
+	let file = (x && x.getFileName && print_path(x.getFileName())) || '';
+	let line = (x && x.getLineNumber && x.getLineNumber()) || '';
+	let func = (x && x.getFunctionName && x.getFunctionName()) || '';
 
-	if(short && file) {
+	if (short && file) {
 		file = PATH.basename(file);
 	}
 
-	var out = file || 'unknown';
-	if(line) { out += ':' + line; }
-	if(func) { out += ' @' + func + '()'; }
+	let out = file || 'unknown';
+	if (line) { out += ':' + line; }
+	if (func) { out += ' @' + func + '()'; }
 	return out;
 }
 
@@ -695,15 +710,15 @@ function get_location(x, short) {
  * @returns {function} The wrapped function that will print a warning and otherwise behave as the method would normally.
  */
 debug.obsoleteMethod = function(self, obsolete_func, func) {
-	if(typeof self !== 'function') {
+	if (typeof self !== 'function') {
 		debug.assert(self).typeOf('object');
 	}
 	debug.assert(obsolete_func).typeOf('string');
 	debug.assert(func).typeOf('string');
 	debug.assert(self[func]).typeOf('function');
 	return function() {
-		var args = Array.prototype.slice.call(arguments);
-		var stack = [].concat(debug.__stack);
+		let args = Array.prototype.slice.call(arguments);
+		let stack = [].concat(debug.__stack);
 		debug.log('Warning! An obsolete method .'+ obsolete_func + '() used at ' + get_location(stack[1]) + ' -- use .' + func + '() instead.' );
 		return FUNCTION(self[func]).apply(this, args);
 	};

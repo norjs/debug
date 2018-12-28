@@ -1,17 +1,12 @@
-nor-debug
-=========
+@norjs/debug
+============
 
-Debug helpers for Node.js apps.
-
-TODO
-----
-
-We use [Trello board](//trello.com/b/w2WOISiE/nor-debug) to organize development and keep track on things to do.
+Debug helpers for JavaScript.
 
 Installation
 ------------
 
-You can install the module from the NPM: `npm install nor-debug`
+You can install the module from the NPM: `npm install -d @norjs/debug`
 
 Get current line number
 -----------------------
@@ -26,7 +21,7 @@ Get current stack
 Development or production mode tests
 ------------------------------------
 
-You can test for development/production mode (NODE_ENV) with the 
+You can test for development and/or production mode (NODE_ENV) with the 
 `debug.isProduction()` and `debug.isDevelopment()` which will return boolean 
 values, `true` or `false`.
 
@@ -40,10 +35,10 @@ Write debug log messages
 ------------------------
 
 You may use `debug.log(msg, [msg2...])` to write debug messages. This function 
-will only write log if the app is running in development mode. All non-string 
-arguments will be converted to string with `util.inspect()`.
+will only write log if the app is running in the development mode. All 
+non-string arguments will be converted to string.
 
 Commercial Support
 ------------------
 
-You can buy commercial support from [Sendanor](http://sendanor.com/software).
+You can buy commercial support from [Sendanor](https://sendanor.com/).
