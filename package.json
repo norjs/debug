@@ -1,6 +1,6 @@
 {
   "name": "@norjs/debug",
-  "version": "1.0.2",
+  "version": "1.3.2",
   "description": "Debug helpers for JavaScript",
   "main": "dist/debug.js",
   "scripts": {
@@ -23,9 +23,9 @@
     "assert"
   ],
   "dependencies": {
-    "nor-is": "^1.0.1",
-    "nor-array": "^1.0.1",
-    "nor-function": "^1.0.1"
+    "@norjs/array": "^1.3.2",
+    "@norjs/is": "^1.3.2",
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
