@@ -3,7 +3,6 @@
  * Copyright (c) 2013-2019 Sendanor <info@sendanor.fi>
  * Copyright (c) 2013-2019 Jaakko-Heikki Heusala <jheusala@iki.fi>
  *
- * @FIXME: The ARRAY()'s should be converted to for-loops, etc to improve performance.
  */
 
 const DEBUG_LINE_LIMIT = parseInt(process.env.DEBUG_LINE_LIMIT || 500, 10);
@@ -14,8 +13,7 @@ import debug from './core.js';
 import util from "util";
 import FS from "fs";
 import PATH from "path";
-import is from "nor-is";
-import ARRAY from "nor-array";
+import is from "@norjs/is";
 import NorAssert from './NorAssert.js';
 import DummyAssert from './DummyAssert.js';
 
@@ -165,7 +163,7 @@ function _setup_property(obj, prop, opts) {
  * @param opts
  * @param failsafe
  */
-function setup_property(obj, prop, opts, failsafe) {
+function setup_property (obj, prop, opts, failsafe) {
 	try {
 		_setup_property(obj, prop, opts);
 	} catch (err) {
@@ -173,20 +171,15 @@ function setup_property(obj, prop, opts, failsafe) {
 	}
 }
 
-/** Setup `debig.__stack` */
+/** Setup `debug.__stack` */
 setup_property(debug, '__stack', {
-	get: () => {
-
-		if (!features.Error_captureStackTrace) {
-			return [];
-		}
-
-		let orig, err, stack;
+	get: (!features.Error_captureStackTrace) ? () => [] : function stack_getter () {
+		let err, stack;
+		const orig = Error.prepareStackTrace;
 		try {
-			orig = Error.prepareStackTrace;
-			Error.prepareStackTrace = function(_, stack){ return stack; };
+			Error.prepareStackTrace = ( _, stack ) => stack;
 			err = new Error();
-			Error.captureStackTrace(err, get);
+			Error.captureStackTrace(err, stack_getter);
 			stack = err.stack;
 		} finally {
 			Error.prepareStackTrace = orig;
@@ -197,8 +190,8 @@ setup_property(debug, '__stack', {
 
 setup_property(debug, '__line', {
 	get: () => {
-		let stack = debug.__stack;
-		let tmp = stack[1];
+		const stack = debug.__stack;
+		const tmp = stack[1];
 		if (!(tmp && (typeof tmp.getLineNumber === 'function'))) {
 			return;
 		}
@@ -221,7 +214,7 @@ debug.isDevelopment = () => debug.isProduction() ? false : true;
  * @param x
  * @return {*}
  */
-function inspect_values(x) {
+function inspect_values (x) {
 	if (typeof x === "string") { return x; }
 	return util.inspect(x);
 }
@@ -230,7 +223,7 @@ function inspect_values(x) {
  * @param x
  * @return {string}
  */
-function convert_specials(x) {
+function convert_specials (x) {
 	return (''+x).replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
 }
 
@@ -238,7 +231,7 @@ function convert_specials(x) {
  * @param x
  * @return {string}
  */
-function trim_values(x) {
+function trim_values (x) {
 	return (''+x).replace(/ +$/, "").replace(/^ +/, "");
 }
 
@@ -246,7 +239,7 @@ function trim_values(x) {
  * @param limit
  * @return {Function}
  */
-function chop_long_values(limit) {
+function chop_long_values (limit) {
 	if (limit-3 < 1) {
 		throw new TypeError("limit must be at least four (4) characters!");
 	}
@@ -263,7 +256,7 @@ function chop_long_values(limit) {
  * @param str
  * @return {*}
  */
-function chop_long_paths(str) {
+function chop_long_paths (str) {
 	str = ''+str;
 	str = str.replace(/(\/[^/:\)\(]+)+/gi, path => {
 		if (FS && is.func(FS.existsSync) && FS.existsSync(path)) {
@@ -275,7 +268,7 @@ function chop_long_paths(str) {
 }
 
 /** Helper function that can be called but does nothing */
-function do_nothing() {
+function do_nothing () {
 }
 
 /** Get timestamp
@@ -544,8 +537,8 @@ setup_property(debug, 'log', {
 			return do_nothing;
 		}
 
-		let stack = debug.__stack;
-		let timestamp = get_timestamp();
+		const stack = debug.__stack;
+		const timestamp = get_timestamp();
 		let prefix = timestamp;
 		let line, func;
 
@@ -568,7 +561,7 @@ setup_property(debug, 'log', {
 			try {
 				if (ansi) { debug.defaults.cursors.log(stdout_cursor); }
 				_print_log( chop_long_paths(get_prefix(prefix)) + ': ');
-				ARRAY( ARRAY(args).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(line => {
+				args.map(inspect_and_trim).join(' ').split("\n").map(chop_and_convert).forEach(line => {
 					_print_log( ''+ timestamp + ' > ' + chop_long_paths(line) );
 				});
 			} finally {
@@ -612,7 +605,7 @@ setup_property(debug, 'error', {
 		return ( ...args ) => {
 			//let cols = [];
 			print_error( chop_long_paths(get_prefix(prefix)) + ': ' );
-			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(line => {
+			args.map(get_stack).map(inspect_and_trim).join(' ').split("\n").map(chop_and_convert).forEach(line => {
 				print_error( ''+timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
@@ -653,7 +646,7 @@ setup_property(debug, 'warn', {
 		return ( ...args ) => {
 			//let cols = [];
 			print_warning( chop_long_paths(get_prefix(prefix)) + ': ' );
-			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(line => {
+			args.map(get_stack).map(inspect_and_trim).join(' ').split("\n").map(chop_and_convert).forEach(line => {
 				print_warning( ''+timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
@@ -695,7 +688,7 @@ setup_property(debug, 'info', {
 		return ( ...args ) => {
 			//let cols = [];
 			print_info( chop_long_paths(get_prefix(prefix)) + ': ' );
-			ARRAY( ARRAY(args).map(get_stack).map(inspect_and_trim).join(' ').split("\n") ).map(chop_and_convert).forEach(line => {
+			args.map(get_stack).map(inspect_and_trim).join(' ').split("\n").map(chop_and_convert).forEach(line => {
 				print_info( ''+ timestamp + ' > ' + chop_long_paths(line) );
 			});
 		};
@@ -749,9 +742,9 @@ debug.inspectMethod = ( obj, method ) => {
 	obj[method] = (...args) => {
 		let x = (debug.inspectMethod._id += 1);
 		let stack = [].concat(debug.__stack);
-		debug.log('#' + x + ': Call to ' + method + ' (' + ARRAY(args).map(inspect_values).join(', ') + ') ...');
+		debug.log('#' + x + ': Call to ' + method + ' (' + args.map(inspect_values).join(', ') + ') ...');
 		// FIXME: files could be printed relative to previous stack item, so it would not take that much space.
-		debug.log('#' + x + ": stack = ", ARRAY(stack).map(x => print_path(x.getFileName()) + ':' + x.getLineNumber()).join(' -> ') );
+		debug.log('#' + x + ": stack = ", stack.map(x => print_path(x.getFileName()) + ':' + x.getLineNumber()).join(' -> ') );
 		let ret = obj[origSymbol](...args);
 		debug.log('#' + x + ': returned: ', ret);
 		return ret;

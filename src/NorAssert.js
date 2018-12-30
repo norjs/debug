@@ -5,12 +5,15 @@
  *
  */
 
-const is = require("nor-is");
-const util = require('util');
-const debug = require('./core.js');
-const print_path = require('./print-path.js');
+import is from "@norjs/is";
+import util from "util";
+import debug from "./core.js";
+import print_path from "./print-path.js";
 
-/* Helper to get function name */
+/** Helper to get function name
+ * @param fun
+ * @return {* | string | string}
+ */
 function get_function_name (fun) {
 	let ret = ''+fun;
 	let len = 'function '.length;
@@ -131,8 +134,8 @@ export default class NorAssert {
 		throw new TypeError( get_assert_prefix() + ' length greater than: ' + util.inspect(this.value.length) + ' > ' + util.inspect(value2) );
 	}
 
-	/** Check `this.value` with nor-is, meaning it will check that `require('nor-is')[value2](this.value)` returns true.
-	 * @param value2 {mixed} Any this.value type, passed to nor-is function.
+	/** Check `this.value` with @norjs/is, meaning it will check that `require('@norjs/is')[value2](this.value)` returns true.
+	 * @param value2 {mixed} Any this.value type, passed to @norjs/is function.
 	 */
 	is (value2) {
 		if (this.value_ignored) { return this; }
@@ -143,8 +146,8 @@ export default class NorAssert {
 		throw new TypeError( get_assert_prefix() + ' is not ' + value2 + ': ' + util.inspect(this.value) );
 	}
 
-	/** Check `this.value` with nor-is, meaning it will check that `require('nor-is')[value2](this.value)` returns not true.
-	 * @param value2 {mixed} Any this.value type, passed to nor-is function.
+	/** Check `this.value` with @norjs/is, meaning it will check that `require('@norjs/is')[value2](this.value)` returns not true.
+	 * @param value2 {mixed} Any this.value type, passed to @norjs/is function.
 	 */
 	not (value2) {
 		if (this.value_ignored) { return this; }
