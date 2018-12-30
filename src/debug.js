@@ -53,7 +53,7 @@ function parse_env_boolean (value, def = PRIVATE.UNDEFINED) {
 }
 
 const DEBUG_ENABLE_COLORS = parse_env_boolean(process.env.DEBUG_ENABLE_COLORS, true);
-const ansi = (!process.browser) && (DEBUG_ENABLE_COLORS) ? require('./ansi.js').create : undefined;
+const ansi = (!process.browser) && (DEBUG_ENABLE_COLORS) ? (s) => require('./ansi.js').default.create(s) : undefined;
 let stdout_cursor, stderr_cursor;
 
 // FIXME: `process.browser` does not seem to work on newer browserify

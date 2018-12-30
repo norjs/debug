@@ -21,42 +21,42 @@ export default class AnsiCursor {
 	 * @param codes {Array.<number>}
 	 */
 	[PRIVATE.print] (...codes) {
-		this[PRIVATE.stream].write(`\\033[${codes.join(';')}m`);
+		this[PRIVATE.stream].write(`\u001b[${codes.join(';')}m`);
 	}
 
 	/**
 	 *
 	 */
 	brightRed () {
-		[PRIVATE.print](31, 1);
+		this[PRIVATE.print](31, 1);
 	}
 
 	/**
 	 *
 	 */
 	brightYellow () {
-		[PRIVATE.print](33, 1);
+		this[PRIVATE.print](33, 1);
 	}
 
 	/**
 	 *
 	 */
 	magenta () {
-		[PRIVATE.print](35);
+		this[PRIVATE.print](35);
 	}
 
 	/**
 	 *
 	 */
 	green () {
-		[PRIVATE.print](32);
+		this[PRIVATE.print](32);
 	}
 
 	/**
 	 *
 	 */
 	reset () {
-		[PRIVATE.print](0);
+		this[PRIVATE.print](0);
 	}
 
 	/**
