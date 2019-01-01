@@ -1,6 +1,6 @@
 {
   "name": "@norjs/debug",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Debug helpers for JavaScript",
   "main": "dist/debug.js",
   "scripts": {
