@@ -23,7 +23,7 @@
     "assert"
   ],
   "dependencies": {
-    "@norjs/is": "^1.3.2",
+    "@norjs/is": "^1.3.3",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
